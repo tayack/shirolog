@@ -11,7 +11,6 @@ SERVICE_ACCOUNT_KEY = 'shirolog_service_account.json'
 def initialize_firebase():
     """Firebaseの初期化を行い、Firestoreクライアントを返す"""
     try:
-        # scriptsディレクトリ内を探す
         script_dir = os.path.dirname(os.path.abspath(__file__))
         key_path = os.path.join(script_dir, SERVICE_ACCOUNT_KEY)
 
@@ -50,7 +49,6 @@ def import_spots(db, csv_path):
 
     batch = db.batch()
     for _, row in df.iterrows():
-        # spot_id をドキュメントIDとして使用
         doc_ref = db.collection('master_spots').document(row['spot_id'])
         data = {
             'spot_id': row['spot_id'],
@@ -74,17 +72,16 @@ def import_missions(db, csv_path):
 
     batch = db.batch()
     for _, row in df.iterrows():
-        # m_id をドキュメントIDとして使用
         doc_ref = db.collection('master_missions').document(row['m_id'])
 
-        # target_ids はカンマ区切りの文字列をリストに変換
         target_ids = [s.strip() for s in str(row['target_ids']).split(',')]
 
+        # models.dart の Mission.fromFirestore が期待するキー名に合わせる
         data = {
             'm_id': row['m_id'],
             'title': row['title'],
-            'target_ids': target_ids,
-            'desc': row['desc']
+            'targetSpotIds': target_ids,    # target_ids から変更
+            'description': row['desc']      # desc から変更
         }
         batch.set(doc_ref, data)
 
