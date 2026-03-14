@@ -1,0 +1,36 @@
+# Flutter related
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android related
+android/**/generated/
+android/app/google-services.json
+android/local.properties
+android/**/*.keystore
+android/**/*.jks
+
+# iOS related
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+ios/Runner/GoogleService-Info.plist
+
+# macOS related
+macos/Flutter/Generated.xcconfig
+macos/Flutter/ephemeral/
+
+# IDE related
+.idea/
+*.iml
+*.iws
+.vscode/
+
+# Project scripts and sensitive keys
+scripts/*.json
+*.json
+scripts/__pycache__/
+venv/
+.env
