@@ -1,4 +1,4 @@
-spot_id,name,prefecture,pref_id
-castle-himeji,姫路城,兵庫県,28
-castle-matsumoto,松本城,長野県,20
-castle-inuyama,犬山城,愛知県,23
+spot_id,name_ja,name_en,prefecture_ja,prefecture_en,pref_id
+castle-himeji,姫路城,Himeji Castle,兵庫県,Hyogo,28
+castle-matsumoto,松本城,Matsumoto Castle,長野県,Nagano,20
+castle-inuyama,犬山城,Inuyama Castle,愛知県,Aichi,23

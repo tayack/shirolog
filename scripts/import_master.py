@@ -25,21 +25,23 @@ def initialize_firebase():
         print(f"Firebase初期化エラー: {e}")
         return None
 
-def delete_collection(db, collection_name, batch_size=500):
-    """指定されたコレクション内のすべてのドキュメントを削除する"""
+def delete_collection(db, collection_name):
+    """指定されたコレクション内のすべてのドキュメントを削除する (Delete処理)"""
     print(f"'{collection_name}' コレクションを削除中...")
-    collection_ref = db.collection(collection_name)
-    docs = collection_ref.list_documents(page_size=batch_size)
-    deleted = 0
-
-    for doc in docs:
-        doc.delete()
-        deleted += 1
-
-    print(f"'{collection_name}' から {deleted} 件のドキュメントを削除しました。")
+    try:
+        collection_ref = db.collection(collection_name)
+        # ドキュメントを1件ずつ削除（マスターデータ規模ならこれで十分）
+        docs = collection_ref.list_documents()
+        deleted = 0
+        for doc in docs:
+            doc.delete()
+            deleted += 1
+        print(f"'{collection_name}' から {deleted} 件の古いデータを削除しました。")
+    except Exception as e:
+        print(f"'{collection_name}' の削除中にエラーが発生しました（無視して継続します）: {e}")
 
 def import_spots(db, csv_path):
-    """spots.csvを読み込み、master_spotsコレクションに登録する"""
+    """spots.csvを読み込み、master_spotsコレクションに登録する (Insert処理)"""
     if not os.path.exists(csv_path):
         print(f"エラー: {csv_path} が見つかりません。")
         return
@@ -52,8 +54,10 @@ def import_spots(db, csv_path):
         doc_ref = db.collection('master_spots').document(row['spot_id'])
         data = {
             'spot_id': row['spot_id'],
-            'name': row['name'],
-            'prefecture': row['prefecture'],
+            'name_ja': row['name_ja'],
+            'name_en': row['name_en'],
+            'prefecture_ja': row['prefecture_ja'],
+            'prefecture_en': row['prefecture_en'],
             'pref_id': int(row['pref_id'])
         }
         batch.set(doc_ref, data)
@@ -62,7 +66,7 @@ def import_spots(db, csv_path):
     print("master_spots のインポートが完了しました。")
 
 def import_missions(db, csv_path):
-    """missions.csvを読み込み、master_missionsコレクションに登録する"""
+    """missions.csvを読み込み、master_missionsコレクションに登録する (Insert処理)"""
     if not os.path.exists(csv_path):
         print(f"エラー: {csv_path} が見つかりません。")
         return
@@ -76,12 +80,13 @@ def import_missions(db, csv_path):
 
         target_ids = [s.strip() for s in str(row['target_ids']).split(',')]
 
-        # models.dart の Mission.fromFirestore が期待するキー名に合わせる
         data = {
             'm_id': row['m_id'],
-            'title': row['title'],
-            'targetSpotIds': target_ids,    # target_ids から変更
-            'description': row['desc']      # desc から変更
+            'title_ja': row['title_ja'],
+            'title_en': row['title_en'],
+            'description_ja': row['description_ja'],
+            'description_en': row['description_en'],
+            'targetSpotIds': target_ids,
         }
         batch.set(doc_ref, data)
 
@@ -91,15 +96,15 @@ def import_missions(db, csv_path):
 if __name__ == "__main__":
     db = initialize_firebase()
     if db:
-        print("--- Firestore マスターデータ構築開始 (DeleteInsert) ---")
+        print("=== Firestore マスターデータ構築 (Delete-Insert 方式) ===")
 
-        # 既存データの削除
+        # 1. 既存データをすべて削除 (Delete)
         delete_collection(db, 'master_spots')
         delete_collection(db, 'master_missions')
 
-        # CSVからのインポート
+        # 2. CSVの内容をすべて登録 (Insert)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         import_spots(db, os.path.join(script_dir, 'spots.csv'))
         import_missions(db, os.path.join(script_dir, 'missions.csv'))
 
-        print("--- すべての処理が正常に完了しました ---")
+        print("=== すべての処理が正常に完了しました ===")
