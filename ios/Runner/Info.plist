@@ -45,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>twitter</string>
+		<string>https</string>
+	</array>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>お城の写真を記録に保存するためにギャラリーへのアクセス許可が必要です。</string>
+	<key>NSCameraUsageDescription</key>
+	<string>お城の写真をその場で撮影して記録に保存するためにカメラへのアクセス許可が必要です。</string>
 </dict>
 </plist>

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+// 記録画面のモード定義（循環参照防止のためここに配置）
+enum RecordMode { newRecord, edit, view }
+
 // 色定義
 const kSengokuGold = Color(0xFFC5A059);
 const kUrushiBlack = Color(0xFF1A1A1A);
@@ -15,6 +18,7 @@ class ShiroSearchField extends StatelessWidget {
   final String hintText;
   final bool readOnly;
   final TextEditingController? controller;
+  final Widget? prefixIcon;
   final Widget? suffixIcon;
   final VoidCallback? onTap;
 
@@ -23,6 +27,7 @@ class ShiroSearchField extends StatelessWidget {
     required this.hintText,
     this.readOnly = false,
     this.controller,
+    this.prefixIcon,
     this.suffixIcon,
     this.onTap,
   });
@@ -41,6 +46,7 @@ class ShiroSearchField extends StatelessWidget {
           horizontal: 16,
           vertical: 12,
         ),
+        prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         border: const OutlineInputBorder(
           borderSide: BorderSide(color: Colors.black12),

@@ -1,102 +1,220 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../l10n/app_localizations.dart';
 import '../models.dart' as models;
-import '../main.dart';
+import '../theme.dart';
 import '../widgets/wafu_icon.dart';
 
-class MissionScreen extends StatelessWidget {
+class MissionScreen extends StatefulWidget {
   const MissionScreen({super.key});
 
   @override
+  State<MissionScreen> createState() => _MissionScreenState();
+}
+
+class _MissionScreenState extends State<MissionScreen> {
+  Set<String> _favoriteMissionIds = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _favoriteMissionIds = (prefs.getStringList('favorite_missions') ?? [])
+          .toSet();
+    });
+  }
+
+  Future<void> _toggleFavorite(String missionId) async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      if (_favoriteMissionIds.contains(missionId)) {
+        _favoriteMissionIds.remove(missionId);
+      } else {
+        _favoriteMissionIds.add(missionId);
+      }
+      prefs.setStringList('favorite_missions', _favoriteMissionIds.toList());
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    // 翻訳クラスの生成が間に合わない場合に備えて dynamic で取得
+    final dynamic l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
 
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        Text(
-          l10n.mission,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: kUrushiBlack,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('master_missions')
-                .snapshots(),
-            builder: (context, mSnapshot) {
-              if (!mSnapshot.hasData) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              return StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('user_logs')
-                    .where('userId', isEqualTo: user?.uid ?? 'guest')
-                    .snapshots(),
-                builder: (context, lSnapshot) {
-                  final userVisits = lSnapshot.hasData
-                      ? lSnapshot.data!.docs
-                            .map(
-                              (doc) => models.Visit.fromFirestore(
-                                doc as DocumentSnapshot<Map<String, dynamic>>,
-                              ),
-                            )
-                            .toList()
-                      : <models.Visit>[];
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('master_missions')
+          .snapshots(),
+      builder: (context, mSnapshot) {
+        if (!mSnapshot.hasData)
+          return const Center(child: CircularProgressIndicator());
 
-                  final missions = mSnapshot.data!.docs
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('user_logs')
+              .where('userId', isEqualTo: user?.uid ?? 'guest')
+              .snapshots(),
+          builder: (context, lSnapshot) {
+            final visits = lSnapshot.hasData
+                ? lSnapshot.data!.docs
                       .map(
-                        (doc) => models.Mission.fromFirestore(
-                          doc as DocumentSnapshot<Map<String, dynamic>>,
+                        (d) => models.Visit.fromFirestore(
+                          d as DocumentSnapshot<Map<String, dynamic>>,
                         ),
                       )
-                      .toList();
+                      .toList()
+                : <models.Visit>[];
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: missions.length,
-                    itemBuilder: (context, index) =>
-                        _buildMissionItem(context, missions[index], userVisits),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-      ],
+            final missions = mSnapshot.data!.docs
+                .map(
+                  (d) => models.Mission.fromFirestore(
+                    d as DocumentSnapshot<Map<String, dynamic>>,
+                  ),
+                )
+                .toList();
+
+            final favoriteMissions = <models.Mission>[];
+            final completedMissions = <models.Mission>[];
+            final inProgressMissions = <models.Mission>[];
+            final unstartedMissions = <models.Mission>[];
+
+            for (final mission in missions) {
+              final count = mission.getAchievedCount(visits);
+              final isFav = _favoriteMissionIds.contains(mission.id);
+
+              if (isFav) {
+                favoriteMissions.add(mission);
+              } else if (count == mission.targetSpotIds.length) {
+                completedMissions.add(mission);
+              } else if (count > 0) {
+                inProgressMissions.add(mission);
+              } else {
+                unstartedMissions.add(mission);
+              }
+            }
+
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (favoriteMissions.isNotEmpty) ...[
+                  _buildSectionHeader(
+                    context,
+                    _getTranslation(l10n, 'favoriteMissions', 'お気に入り'),
+                  ),
+                  ...favoriteMissions.map(
+                    (m) => _buildMissionCard(context, m, visits),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (inProgressMissions.isNotEmpty) ...[
+                  _buildSectionHeader(
+                    context,
+                    _getTranslation(l10n, 'inProgressMissions', '挑戦中'),
+                  ),
+                  ...inProgressMissions.map(
+                    (m) => _buildMissionCard(context, m, visits),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (unstartedMissions.isNotEmpty) ...[
+                  _buildSectionHeader(
+                    context,
+                    _getTranslation(l10n, 'unstartedMissions', '未挑戦'),
+                  ),
+                  ...unstartedMissions.map(
+                    (m) => _buildMissionCard(context, m, visits),
+                  ),
+                  const SizedBox(height: 24),
+                ],
+                if (completedMissions.isNotEmpty) ...[
+                  _buildSectionHeader(
+                    context,
+                    _getTranslation(l10n, 'completedMissions', '達成済み'),
+                  ),
+                  ...completedMissions.map(
+                    (m) => _buildMissionCard(context, m, visits),
+                  ),
+                ],
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget _buildMissionItem(
+  // 翻訳プロパティが存在するか安全にチェックして取得する関数
+  String _getTranslation(dynamic l10n, String key, String fallback) {
+    try {
+      // 翻訳クラスが生成されていればその値を返し、なければフォールバック
+      switch (key) {
+        case 'favoriteMissions':
+          return l10n.favoriteMissions;
+        case 'inProgressMissions':
+          return l10n.inProgressMissions;
+        case 'unstartedMissions':
+          return l10n.unstartedMissions;
+        case 'completedMissions':
+          return l10n.completedMissions;
+        default:
+          return fallback;
+      }
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 12),
+      child: Text(
+        title,
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          fontWeight: FontWeight.bold,
+          color: kIshigakiGrey,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMissionCard(
     BuildContext context,
     models.Mission mission,
-    List<models.Visit> userVisits,
+    List<models.Visit> visits,
   ) {
     final l10n = AppLocalizations.of(context)!;
-    final count = mission.getAchievedCount(userVisits);
+    final count = mission.getAchievedCount(visits);
+    final isCompleted = count == mission.targetSpotIds.length;
+    final isFav = _favoriteMissionIds.contains(mission.id);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: ExpansionTile(
-        leading: const WafuIcon(
+        leading: WafuIcon(
           assetName: 'kabuto',
           fallbackType: WafuIconType.kabuto,
-          color: kSengokuGold,
+          color: isCompleted ? kVisitedGreen : kSengokuGold,
           size: 28,
         ),
         title: Text(
-          mission.title,
+          mission.getTitle(context),
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
           '$count / ${mission.targetSpotIds.length} ${l10n.achieved}',
+        ),
+        trailing: IconButton(
+          icon: Icon(isFav ? Icons.star : Icons.star_border),
+          color: isFav ? Colors.amber : Colors.grey,
+          onPressed: () => _toggleFavorite(mission.id),
         ),
         children: [
           Padding(
@@ -105,7 +223,7 @@ class MissionScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  mission.description,
+                  mission.getDescription(context),
                   style: const TextStyle(fontSize: 13, color: kIshigakiGrey),
                 ),
                 const SizedBox(height: 12),
@@ -117,40 +235,30 @@ class MissionScreen extends StatelessWidget {
                                 .doc(id)
                                 .get()
                             as Future<DocumentSnapshot<Map<String, dynamic>>>,
-                    builder: (context, snapshot) {
-                      final name = snapshot.hasData
-                          ? models.Spot.fromFirestore(
-                              snapshot.data!,
-                            ).displayName
+                    builder: (context, s) {
+                      final spot = s.hasData
+                          ? models.Spot.fromFirestore(s.data!)
+                          : null;
+                      final name = spot != null
+                          ? spot.getDisplayName(context)
                           : id;
-                      final visited = mission.isSpotAchieved(id, userVisits);
+                      final done = mission.isSpotAchieved(id, visits);
                       return ListTile(
                         leading: Icon(
-                          visited
+                          done
                               ? Icons.check_circle
                               : Icons.radio_button_unchecked,
-                          color: visited ? kVisitedGreen : kUnselectedGrey,
+                          color: done ? kVisitedGreen : kUnselectedGrey,
                         ),
                         title: Text(
                           name,
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: visited
+                            fontWeight: done
                                 ? FontWeight.bold
                                 : FontWeight.normal,
                           ),
                         ),
-                        onTap: () {
-                          final navState = context
-                              .findAncestorStateOfType<
-                                MainNavigationScreenState
-                              >();
-                          navState?.navigateToRecord(
-                            name.split(' (')[0],
-                            visited ? RecordMode.view : RecordMode.newRecord,
-                            spotId: id,
-                          );
-                        },
                       );
                     },
                   ),

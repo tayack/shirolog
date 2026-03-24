@@ -1,11 +1,11 @@
 {
-  "appTitle": "城Log",
+  "appTitle": "城ログ",
   "home": "ホーム",
   "record": "記録",
   "search": "ログ検索",
   "mission": "ミッション",
   "settings": "設定",
-  "loginTitle": "城Log",
+  "loginTitle": "城ログ",
   "loginSubtitle": "登城記録アプリ",
   "googleLogin": "Googleでサインイン",
   "appleLogin": "Appleでサインイン",
@@ -21,6 +21,29 @@
   "edit": "内容を編集する",
   "searchCastle": "城名を検索",
   "alreadyVisited": "すでに訪問済みです。編集を行いたい場合はログ検索から編集を行ってください。",
-  "achieved": "制覇",
-  "points": "地点"
+  "achieved": "達成",
+  "points": "地点",
+  "guestModeWarning": "⚠️ ゲストモード: 設定からアカウント連携をすることで機種変更してもデータを保てます",
+  "linkGoogleAccount": "Googleアカウントを連携する",
+  "linkSuccess": "アカウントの連携が完了しました！",
+  "logoutWarningTitle": "ログアウトの確認",
+  "logoutWarningContent": "ゲストアカウントのままログアウトするとデータが完全に失われます。アカウント連携をしてデータを引き継ぎますか？",
+  "favoriteMissions": "お気に入り",
+  "inProgressMissions": "挑戦中",
+  "unstartedMissions": "未挑戦",
+  "completedMissions": "達成済み",
+  "shareTitle": "登城記録を保存しました！",
+  "shareContent": "思い出をSNSにシェアしませんか？",
+  "shareLater": "あとで",
+  "shareNow": "シェアする",
+  "shareTwitter": "X (Twitter)",
+  "shareOthers": "その他",
+  "shareText": "【登城記録】{castleName} に行ってきました！ ({date})\n\n{comment}\n\n#城ログ #城巡り #日本100名城",
+  "@shareText": {
+    "placeholders": {
+      "castleName": {},
+      "date": {},
+      "comment": {}
+    }
+  }
 }

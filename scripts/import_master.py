@@ -2,6 +2,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 import pandas as pd
 import os
+import csv
 
 # ---------------------------------------------------------
 # 設定: Firebase コンソールから取得した秘密鍵のパス
@@ -26,11 +27,10 @@ def initialize_firebase():
         return None
 
 def delete_collection(db, collection_name):
-    """指定されたコレクション内のすべてのドキュメントを削除する (Delete処理)"""
+    """指定されたコレクション内のすべてのドキュメントを削除する"""
     print(f"'{collection_name}' コレクションを削除中...")
     try:
         collection_ref = db.collection(collection_name)
-        # ドキュメントを1件ずつ削除（マスターデータ規模ならこれで十分）
         docs = collection_ref.list_documents()
         deleted = 0
         for doc in docs:
@@ -38,54 +38,62 @@ def delete_collection(db, collection_name):
             deleted += 1
         print(f"'{collection_name}' から {deleted} 件の古いデータを削除しました。")
     except Exception as e:
-        print(f"'{collection_name}' の削除中にエラーが発生しました（無視して継続します）: {e}")
+        print(f"'{collection_name}' の削除中にエラーが発生しました: {e}")
 
 def import_spots(db, csv_path):
-    """spots.csvを読み込み、master_spotsコレクションに登録する (Insert処理)"""
+    """spots.csvを読み込み、master_spotsコレクションに登録する"""
     if not os.path.exists(csv_path):
         print(f"エラー: {csv_path} が見つかりません。")
         return
 
-    df = pd.read_csv(csv_path)
+    # dtypeを指定して、pref_idが意図せず浮動小数になるのを防ぐ
+    df = pd.read_csv(csv_path, encoding='utf-8', dtype={'pref_id': str})
     print(f"'{csv_path}' から {len(df)} 件のスポットデータをインポート中...")
 
     batch = db.batch()
+    count = 0
     for _, row in df.iterrows():
-        doc_ref = db.collection('master_spots').document(row['spot_id'])
+        doc_ref = db.collection('master_spots').document(str(row['spot_id']))
         data = {
-            'spot_id': row['spot_id'],
-            'name_ja': row['name_ja'],
-            'name_en': row['name_en'],
-            'prefecture_ja': row['prefecture_ja'],
-            'prefecture_en': row['prefecture_en'],
-            'pref_id': int(row['pref_id'])
+            'spot_id': str(row['spot_id']),
+            'name_ja': str(row['name_ja']),
+            'name_en': str(row['name_en']) if pd.notna(row['name_en']) else '',
+            'prefecture_ja': str(row['prefecture_ja']),
+            'prefecture_en': str(row['prefecture_en']),
+            'pref_id': str(row['pref_id']).zfill(2) # 常に2桁の文字列にする
         }
         batch.set(doc_ref, data)
+        count += 1
+        if count % 500 == 0:
+            batch.commit()
+            batch = db.batch()
 
     batch.commit()
     print("master_spots のインポートが完了しました。")
 
 def import_missions(db, csv_path):
-    """missions.csvを読み込み、master_missionsコレクションに登録する (Insert処理)"""
+    """missions.csvを読み込み、master_missionsコレクションに登録する"""
     if not os.path.exists(csv_path):
         print(f"エラー: {csv_path} が見つかりません。")
         return
 
-    df = pd.read_csv(csv_path)
+    # 標準の読み込み設定に戻す（引用符は自動で扱われる）
+    df = pd.read_csv(csv_path, encoding='utf-8')
     print(f"'{csv_path}' から {len(df)} 件のミッションデータをインポート中...")
 
     batch = db.batch()
     for _, row in df.iterrows():
-        doc_ref = db.collection('master_missions').document(row['m_id'])
+        doc_ref = db.collection('master_missions').document(str(row['m_id']))
 
-        target_ids = [s.strip() for s in str(row['target_ids']).split(',')]
+        # カンマ区切りの文字列をリストに変換
+        target_ids = [s.strip() for s in str(row['target_ids']).split(',') if s.strip()]
 
         data = {
-            'm_id': row['m_id'],
-            'title_ja': row['title_ja'],
-            'title_en': row['title_en'],
-            'description_ja': row['description_ja'],
-            'description_en': row['description_en'],
+            'm_id': str(row['m_id']),
+            'title_ja': str(row['title_ja']),
+            'title_en': str(row['title_en']),
+            'description_ja': str(row['description_ja']),
+            'description_en': str(row['description_en']),
             'targetSpotIds': target_ids,
         }
         batch.set(doc_ref, data)
@@ -96,13 +104,10 @@ def import_missions(db, csv_path):
 if __name__ == "__main__":
     db = initialize_firebase()
     if db:
-        print("=== Firestore マスターデータ構築 (Delete-Insert 方式) ===")
-
-        # 1. 既存データをすべて削除 (Delete)
+        print("=== Firestore マスターデータ構築 ===")
         delete_collection(db, 'master_spots')
         delete_collection(db, 'master_missions')
 
-        # 2. CSVの内容をすべて登録 (Insert)
         script_dir = os.path.dirname(os.path.abspath(__file__))
         import_spots(db, os.path.join(script_dir, 'spots.csv'))
         import_missions(db, os.path.join(script_dir, 'missions.csv'))

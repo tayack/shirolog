@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../l10n/app_localizations.dart';
 import '../main.dart';
+import '../theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -22,7 +23,6 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
 
-        // Google連携ボタン (ゲストユーザーのみ)
         if (user != null && user.isAnonymous)
           ListTile(
             leading: const Icon(Icons.sync, color: kSengokuGold),
