@@ -130,4 +130,122 @@ class AppLocalizationsJa extends AppLocalizations {
   String shareText(Object castleName, Object date, Object comment) {
     return '【登城記録】$castleName に行ってきました！ ($date)\n\n$comment\n\n#城ログ #城巡り #日本100名城';
   }
+
+  @override
+  String get supportDeveloper => '開発者を応援';
+
+  @override
+  String get supportMessage =>
+      '城ログをご利用いただきありがとうございます！\nもしよろしければ、開発者への応援（お茶代の差し入れ）をしていただけると運営の励みになります。';
+
+  @override
+  String get close => '閉じる';
+
+  @override
+  String get supportConfirm => '応援する';
+
+  @override
+  String get errorFetchingData => 'データの取得に失敗しました';
+
+  @override
+  String get retry => '再試行';
+
+  @override
+  String get totalVisits => '総登城数';
+
+  @override
+  String get castleUnit => '城';
+
+  @override
+  String get yearUnit => '年';
+
+  @override
+  String get supportApp => '城ログを応援する';
+
+  @override
+  String get recentVisits => '最新の訪問履歴';
+
+  @override
+  String get seeAll => 'すべて見る';
+
+  @override
+  String get noRecords => 'まだ記録がありません。\nお城を巡って記録を残しましょう！';
+
+  @override
+  String get recommendedContent => 'おすすめコンテンツ';
+
+  @override
+  String get loading => '読み込み中...';
+
+  @override
+  String get newRecord => '新しい記録';
+
+  @override
+  String get editRecord => '記録を編集';
+
+  @override
+  String get selectPrefecture => '都道府県を選択';
+
+  @override
+  String get viewRecord => '記録を表示・編集する';
+
+  @override
+  String get cancelEdit => '編集をキャンセル';
+
+  @override
+  String get deleteLog => 'ログの削除';
+
+  @override
+  String get deleteConfirm => '削除してもよろしいですか？';
+
+  @override
+  String get cancel => 'キャンセル';
+
+  @override
+  String get delete => '削除';
+
+  @override
+  String get searchCriteria => '検索条件';
+
+  @override
+  String get applying => '適用中';
+
+  @override
+  String get all => 'すべて';
+
+  @override
+  String get searchByCastleName => '城名で検索';
+
+  @override
+  String get exampleCastle => '例: 姫路城';
+
+  @override
+  String get startDate => '開始日';
+
+  @override
+  String get endDate => '終了日';
+
+  @override
+  String get notSpecified => '指定なし';
+
+  @override
+  String get clearCriteria => '検索条件をクリア';
+
+  @override
+  String get noMatchingRecords => '該当する記録が見つかりませんでした。';
+
+  @override
+  String get missionAccomplished => '任務完了';
+
+  @override
+  String get missionCompletedMessage => 'を達成しました！';
+
+  @override
+  String get bravo => 'あっぱれ！';
+
+  @override
+  String get missionAccomplishedSharePrefix => '【ミッション達成！】\n';
+
+  @override
+  String get missionCompletedShareSuffix => ' を制覇しました！\n\n';
 }

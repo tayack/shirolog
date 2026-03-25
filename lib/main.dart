@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'l10n/app_localizations.dart';
 import 'theme.dart';
 import 'screens/home_screen.dart';
@@ -20,6 +21,10 @@ Future<void> main() async {
   } catch (e) {
     debugPrint('Firebase error: $e');
   }
+
+  // Mobile Ads SDKの初期化
+  MobileAds.instance.initialize();
+
   final prefs = await SharedPreferences.getInstance();
   final String? languageCode = prefs.getString('language_code');
   runApp(
@@ -71,7 +76,12 @@ class ShiroLogAppState extends State<ShiroLogApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: const [Locale('ja'), Locale('en')],
+      supportedLocales: const [
+        Locale('ja'),
+        Locale('en'),
+        Locale('zh'),
+        Locale('ko'),
+      ],
       locale: _locale,
       home: const AuthGate(),
     );
@@ -131,8 +141,9 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isJa = Localizations.localeOf(context).languageCode == 'ja';
-    final splitIdx = isJa ? 1 : 5; // "城" (1文字) または "Shiro" (5文字)
+    final locale = Localizations.localeOf(context);
+    final isJa = locale.languageCode == 'ja';
+    final splitIdx = isJa ? 1 : 5;
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -174,39 +185,33 @@ class LoginScreen extends StatelessWidget {
                 l10n.loginSubtitle,
                 style: const TextStyle(fontSize: 16, color: kIshigakiGrey),
               ),
-              const SizedBox(height: 60),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l10n.japanese,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isJa ? FontWeight.bold : FontWeight.normal,
-                      color: isJa ? kSengokuGold : kIshigakiGrey,
-                    ),
+              const SizedBox(height: 48),
+              // 言語選択
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: kSengokuGold.withOpacity(0.5)),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: locale.languageCode,
+                    icon: const Icon(Icons.language, color: kSengokuGold),
+                    onChanged: (String? newValue) {
+                      if (newValue != null) {
+                        ShiroLogApp.of(context)?.setLocale(Locale(newValue));
+                      }
+                    },
+                    items: [
+                      DropdownMenuItem(value: 'ja', child: Text(l10n.japanese)),
+                      DropdownMenuItem(value: 'en', child: Text(l10n.english)),
+                      const DropdownMenuItem(value: 'zh', child: Text('简体中文')),
+                      const DropdownMenuItem(value: 'ko', child: Text('한국어')),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    child: Switch(
-                      value: !isJa,
-                      activeColor: kSengokuGold,
-                      onChanged: (v) => ShiroLogApp.of(
-                        context,
-                      )?.setLocale(Locale(v ? 'en' : 'ja')),
-                    ),
-                  ),
-                  Text(
-                    l10n.english,
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: !isJa ? FontWeight.bold : FontWeight.normal,
-                      color: !isJa ? kSengokuGold : kIshigakiGrey,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
               SizedBox(
                 width: 280,
                 height: 54,
@@ -255,6 +260,7 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
   String _prefilledCastleName = '';
   String? _prefilledSpotId;
   RecordMode _currentMode = RecordMode.newRecord;
+  int _recordResetTrigger = 0; // 記録画面のリセットを強制するトリガー
 
   // スワイプ閲覧用のパラメータ
   List<String>? _swipeSpotIds;
@@ -264,6 +270,8 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
     setState(() {
       _selectedIndex = index;
       if (index == 1) {
+        // 記録タブが選ばれたら初期化情報をリセット
+        _recordResetTrigger++;
         _prefilledCastleName = '';
         _prefilledSpotId = null;
         _currentMode = RecordMode.newRecord;
@@ -280,6 +288,7 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
     int initialIndex = 0,
   }) {
     setState(() {
+      _recordResetTrigger++; // 遷移時もリセットを走らせる（または新しい値を適用させる）
       _prefilledCastleName = castleName;
       _prefilledSpotId = spotId;
       _currentMode = mode;
@@ -318,8 +327,9 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
-    final isJa = Localizations.localeOf(context).languageCode == 'ja';
-    final splitIdx = isJa ? 1 : 5; // "城" (1文字) または "Shiro" (5文字)
+    final locale = Localizations.localeOf(context);
+    final isJa = locale.languageCode == 'ja';
+    final splitIdx = isJa ? 1 : (l10n.appTitle.length > 5 ? 5 : 0);
 
     final List<Widget> screens = [
       const HomeScreen(),
@@ -327,6 +337,7 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
         initialCastleName: _prefilledCastleName,
         initialSpotId: _prefilledSpotId,
         initialMode: _currentMode,
+        resetTrigger: _recordResetTrigger, // トリガーを渡す
         swipeSpotIds: _swipeSpotIds,
         swipeInitialIndex: _swipeInitialIndex,
       ),
@@ -343,7 +354,9 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
           text: TextSpan(
             children: [
               TextSpan(
-                text: l10n.appTitle.substring(0, splitIdx),
+                text: l10n.appTitle.length >= splitIdx
+                    ? l10n.appTitle.substring(0, splitIdx)
+                    : l10n.appTitle,
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 28,
@@ -351,14 +364,15 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
                   letterSpacing: 2,
                 ),
               ),
-              TextSpan(
-                text: l10n.appTitle.substring(splitIdx),
-                style: const TextStyle(
-                  color: kSengokuGold,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
+              if (l10n.appTitle.length > splitIdx)
+                TextSpan(
+                  text: l10n.appTitle.substring(splitIdx),
+                  style: const TextStyle(
+                    color: kSengokuGold,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
             ],
           ),
         ),

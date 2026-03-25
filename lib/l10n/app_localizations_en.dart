@@ -21,7 +21,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get search => 'Log Search';
 
   @override
-  String get mission => 'Mission';
+  String get mission => 'Missions';
 
   @override
   String get settings => 'Settings';
@@ -60,30 +60,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get visitDate => 'Visit Date';
 
   @override
-  String get memo => 'Personal Note';
+  String get memo => 'Memo';
 
   @override
   String get save => 'Save Record';
 
   @override
-  String get edit => 'Edit Content';
+  String get edit => 'Edit Record';
 
   @override
   String get searchCastle => 'Search Castle Name';
 
   @override
   String get alreadyVisited =>
-      'You have already visited this site. To edit, please go to Log Search.';
+      'Already visited. If you want to edit, please do so from Log Search.';
 
   @override
   String get achieved => 'Achieved';
 
   @override
-  String get points => 'Points';
+  String get points => 'points';
 
   @override
   String get guestModeWarning =>
-      '⚠️ Guest Mode: Link your account in Settings to keep data when changing devices.';
+      '⚠️ Guest Mode: Link your account in Settings to keep data when changing devices';
 
   @override
   String get linkGoogleAccount => 'Link Google Account';
@@ -92,11 +92,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get linkSuccess => 'Account linked successfully!';
 
   @override
-  String get logoutWarningTitle => 'Logout Confirmation';
+  String get logoutWarningTitle => 'Confirm Logout';
 
   @override
   String get logoutWarningContent =>
-      'Data will be lost if you logout as a guest. Would you like to link your account first?';
+      'If you logout as a guest, your data will be permanently lost. Link account to backup data?';
 
   @override
   String get favoriteMissions => 'Favorites';
@@ -111,7 +111,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get completedMissions => 'Completed';
 
   @override
-  String get shareTitle => 'Visit Record Saved!';
+  String get shareTitle => 'Visit record saved!';
 
   @override
   String get shareContent => 'Would you like to share your memory on SNS?';
@@ -120,7 +120,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareLater => 'Later';
 
   @override
-  String get shareNow => 'Share';
+  String get shareNow => 'Share Now';
 
   @override
   String get shareTwitter => 'X (Twitter)';
@@ -130,6 +130,124 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String shareText(Object castleName, Object date, Object comment) {
-    return '[Castle Log] I visited $castleName! ($date)\n\n$comment\n\n#ShiroLog #CastleTour #Japan100Castles';
+    return '【Visit Log】I visited $castleName! ($date)\n\n$comment\n\n#ShiroLog #CastleTour #100FineCastlesOfJapan';
   }
+
+  @override
+  String get supportDeveloper => 'Support the Developer';
+
+  @override
+  String get supportMessage =>
+      'Thank you for using ShiroLog!\nIf you\'d like, you can support the developer with a small donation (Buy Me a Coffee). It really helps keep the app running!';
+
+  @override
+  String get close => 'Close';
+
+  @override
+  String get supportConfirm => 'Support';
+
+  @override
+  String get errorFetchingData => 'Failed to fetch data';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get totalVisits => 'Total Castles';
+
+  @override
+  String get castleUnit => ' castles';
+
+  @override
+  String get yearUnit => '';
+
+  @override
+  String get supportApp => 'Support ShiroLog';
+
+  @override
+  String get recentVisits => 'Recent Visits';
+
+  @override
+  String get seeAll => 'See All';
+
+  @override
+  String get noRecords => 'No records yet.\nLet\'s go explore some castles!';
+
+  @override
+  String get recommendedContent => 'Recommended';
+
+  @override
+  String get loading => 'Loading...';
+
+  @override
+  String get newRecord => 'New Record';
+
+  @override
+  String get editRecord => 'Edit Record';
+
+  @override
+  String get selectPrefecture => 'Select Prefecture';
+
+  @override
+  String get viewRecord => 'View/Edit Record';
+
+  @override
+  String get cancelEdit => 'Cancel Edit';
+
+  @override
+  String get deleteLog => 'Delete Log';
+
+  @override
+  String get deleteConfirm => 'Are you sure you want to delete this log?';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get searchCriteria => 'Search Criteria';
+
+  @override
+  String get applying => 'Applying';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get searchByCastleName => 'Search by Castle Name';
+
+  @override
+  String get exampleCastle => 'e.g. Himeji Castle';
+
+  @override
+  String get startDate => 'Start Date';
+
+  @override
+  String get endDate => 'End Date';
+
+  @override
+  String get notSpecified => 'Not Specified';
+
+  @override
+  String get clearCriteria => 'Clear Criteria';
+
+  @override
+  String get noMatchingRecords => 'No matching records found.';
+
+  @override
+  String get missionAccomplished => 'Mission Accomplished';
+
+  @override
+  String get missionCompletedMessage => ' accomplished!';
+
+  @override
+  String get bravo => 'Bravo!';
+
+  @override
+  String get missionAccomplishedSharePrefix => '【Mission Accomplished!】\n';
+
+  @override
+  String get missionCompletedShareSuffix => ' has been conquered!\n\n';
 }

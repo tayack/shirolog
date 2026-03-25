@@ -7,6 +7,8 @@ import 'package:intl/intl.dart' as intl;
 
 import 'app_localizations_en.dart';
 import 'app_localizations_ja.dart';
+import 'app_localizations_ko.dart';
+import 'app_localizations_zh.dart';
 
 // ignore_for_file: type=lint
 
@@ -96,6 +98,8 @@ abstract class AppLocalizations {
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('ja'),
+    Locale('ko'),
+    Locale('zh'),
   ];
 
   /// No description provided for @appTitle.
@@ -125,7 +129,7 @@ abstract class AppLocalizations {
   /// No description provided for @mission.
   ///
   /// In en, this message translates to:
-  /// **'Mission'**
+  /// **'Missions'**
   String get mission;
 
   /// No description provided for @settings.
@@ -203,7 +207,7 @@ abstract class AppLocalizations {
   /// No description provided for @memo.
   ///
   /// In en, this message translates to:
-  /// **'Personal Note'**
+  /// **'Memo'**
   String get memo;
 
   /// No description provided for @save.
@@ -215,7 +219,7 @@ abstract class AppLocalizations {
   /// No description provided for @edit.
   ///
   /// In en, this message translates to:
-  /// **'Edit Content'**
+  /// **'Edit Record'**
   String get edit;
 
   /// No description provided for @searchCastle.
@@ -227,7 +231,7 @@ abstract class AppLocalizations {
   /// No description provided for @alreadyVisited.
   ///
   /// In en, this message translates to:
-  /// **'You have already visited this site. To edit, please go to Log Search.'**
+  /// **'Already visited. If you want to edit, please do so from Log Search.'**
   String get alreadyVisited;
 
   /// No description provided for @achieved.
@@ -239,13 +243,13 @@ abstract class AppLocalizations {
   /// No description provided for @points.
   ///
   /// In en, this message translates to:
-  /// **'Points'**
+  /// **'points'**
   String get points;
 
   /// No description provided for @guestModeWarning.
   ///
   /// In en, this message translates to:
-  /// **'⚠️ Guest Mode: Link your account in Settings to keep data when changing devices.'**
+  /// **'⚠️ Guest Mode: Link your account in Settings to keep data when changing devices'**
   String get guestModeWarning;
 
   /// No description provided for @linkGoogleAccount.
@@ -263,13 +267,13 @@ abstract class AppLocalizations {
   /// No description provided for @logoutWarningTitle.
   ///
   /// In en, this message translates to:
-  /// **'Logout Confirmation'**
+  /// **'Confirm Logout'**
   String get logoutWarningTitle;
 
   /// No description provided for @logoutWarningContent.
   ///
   /// In en, this message translates to:
-  /// **'Data will be lost if you logout as a guest. Would you like to link your account first?'**
+  /// **'If you logout as a guest, your data will be permanently lost. Link account to backup data?'**
   String get logoutWarningContent;
 
   /// No description provided for @favoriteMissions.
@@ -299,7 +303,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareTitle.
   ///
   /// In en, this message translates to:
-  /// **'Visit Record Saved!'**
+  /// **'Visit record saved!'**
   String get shareTitle;
 
   /// No description provided for @shareContent.
@@ -317,7 +321,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareNow.
   ///
   /// In en, this message translates to:
-  /// **'Share'**
+  /// **'Share Now'**
   String get shareNow;
 
   /// No description provided for @shareTwitter.
@@ -335,8 +339,242 @@ abstract class AppLocalizations {
   /// No description provided for @shareText.
   ///
   /// In en, this message translates to:
-  /// **'[Castle Log] I visited {castleName}! ({date})\n\n{comment}\n\n#ShiroLog #CastleTour #Japan100Castles'**
+  /// **'【Visit Log】I visited {castleName}! ({date})\n\n{comment}\n\n#ShiroLog #CastleTour #100FineCastlesOfJapan'**
   String shareText(Object castleName, Object date, Object comment);
+
+  /// No description provided for @supportDeveloper.
+  ///
+  /// In en, this message translates to:
+  /// **'Support the Developer'**
+  String get supportDeveloper;
+
+  /// No description provided for @supportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for using ShiroLog!\nIf you\'d like, you can support the developer with a small donation (Buy Me a Coffee). It really helps keep the app running!'**
+  String get supportMessage;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @supportConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Support'**
+  String get supportConfirm;
+
+  /// No description provided for @errorFetchingData.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to fetch data'**
+  String get errorFetchingData;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @totalVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Castles'**
+  String get totalVisits;
+
+  /// No description provided for @castleUnit.
+  ///
+  /// In en, this message translates to:
+  /// **' castles'**
+  String get castleUnit;
+
+  /// No description provided for @yearUnit.
+  ///
+  /// In en, this message translates to:
+  /// **''**
+  String get yearUnit;
+
+  /// No description provided for @supportApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Support ShiroLog'**
+  String get supportApp;
+
+  /// No description provided for @recentVisits.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Visits'**
+  String get recentVisits;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See All'**
+  String get seeAll;
+
+  /// No description provided for @noRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No records yet.\nLet\'s go explore some castles!'**
+  String get noRecords;
+
+  /// No description provided for @recommendedContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recommended'**
+  String get recommendedContent;
+
+  /// No description provided for @loading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading...'**
+  String get loading;
+
+  /// No description provided for @newRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'New Record'**
+  String get newRecord;
+
+  /// No description provided for @editRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Record'**
+  String get editRecord;
+
+  /// No description provided for @selectPrefecture.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Prefecture'**
+  String get selectPrefecture;
+
+  /// No description provided for @viewRecord.
+  ///
+  /// In en, this message translates to:
+  /// **'View/Edit Record'**
+  String get viewRecord;
+
+  /// No description provided for @cancelEdit.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Edit'**
+  String get cancelEdit;
+
+  /// No description provided for @deleteLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Log'**
+  String get deleteLog;
+
+  /// No description provided for @deleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this log?'**
+  String get deleteConfirm;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @searchCriteria.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Criteria'**
+  String get searchCriteria;
+
+  /// No description provided for @applying.
+  ///
+  /// In en, this message translates to:
+  /// **'Applying'**
+  String get applying;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @searchByCastleName.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by Castle Name'**
+  String get searchByCastleName;
+
+  /// No description provided for @exampleCastle.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Himeji Castle'**
+  String get exampleCastle;
+
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get startDate;
+
+  /// No description provided for @endDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get endDate;
+
+  /// No description provided for @notSpecified.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Specified'**
+  String get notSpecified;
+
+  /// No description provided for @clearCriteria.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Criteria'**
+  String get clearCriteria;
+
+  /// No description provided for @noMatchingRecords.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching records found.'**
+  String get noMatchingRecords;
+
+  /// No description provided for @missionAccomplished.
+  ///
+  /// In en, this message translates to:
+  /// **'Mission Accomplished'**
+  String get missionAccomplished;
+
+  /// No description provided for @missionCompletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **' accomplished!'**
+  String get missionCompletedMessage;
+
+  /// No description provided for @bravo.
+  ///
+  /// In en, this message translates to:
+  /// **'Bravo!'**
+  String get bravo;
+
+  /// No description provided for @missionAccomplishedSharePrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'【Mission Accomplished!】\n'**
+  String get missionAccomplishedSharePrefix;
+
+  /// No description provided for @missionCompletedShareSuffix.
+  ///
+  /// In en, this message translates to:
+  /// **' has been conquered!\n\n'**
+  String get missionCompletedShareSuffix;
 }
 
 class _AppLocalizationsDelegate
@@ -350,7 +588,7 @@ class _AppLocalizationsDelegate
 
   @override
   bool isSupported(Locale locale) =>
-      <String>['en', 'ja'].contains(locale.languageCode);
+      <String>['en', 'ja', 'ko', 'zh'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
@@ -363,6 +601,10 @@ AppLocalizations lookupAppLocalizations(Locale locale) {
       return AppLocalizationsEn();
     case 'ja':
       return AppLocalizationsJa();
+    case 'ko':
+      return AppLocalizationsKo();
+    case 'zh':
+      return AppLocalizationsZh();
   }
 
   throw FlutterError(

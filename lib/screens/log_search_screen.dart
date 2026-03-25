@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart' as models;
 import '../theme.dart';
@@ -33,6 +35,13 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
 
   // 城情報のキャッシュ（N+1問題を回避し、高速なリアルタイム検索を実現）
   final Map<String, models.Spot> _spotCache = {};
+
+  NativeAd? _nativeAd;
+  bool _nativeAdIsLoaded = false;
+
+  final String _adUnitId = Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/2247696110'
+      : 'ca-app-pub-3940256099942544/3986624511';
 
   final List<Map<String, String>> _prefectures = [
     {'id': '', 'ja': 'すべて', 'en': 'All'},
@@ -89,6 +98,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
   void initState() {
     super.initState();
     _castleController.addListener(_onSearchChanged);
+    _loadAd();
   }
 
   @override
@@ -96,7 +106,46 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
     _castleController.removeListener(_onSearchChanged);
     _castleController.dispose();
     _debounce?.cancel();
+    _nativeAd?.dispose();
     super.dispose();
+  }
+
+  void _loadAd() {
+    _nativeAd = NativeAd(
+      adUnitId: _adUnitId,
+      listener: NativeAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _nativeAdIsLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+      request: const AdRequest(),
+      nativeTemplateStyle: NativeTemplateStyle(
+        templateType: TemplateType.small,
+        mainBackgroundColor: Colors.white,
+        cornerRadius: 12.0,
+        callToActionTextStyle: NativeTemplateTextStyle(
+          textColor: Colors.white,
+          backgroundColor: kSengokuGold,
+          style: NativeTemplateFontStyle.bold,
+          size: 16.0,
+        ),
+        primaryTextStyle: NativeTemplateTextStyle(
+          textColor: kUrushiBlack,
+          style: NativeTemplateFontStyle.bold,
+          size: 16.0,
+        ),
+        secondaryTextStyle: NativeTemplateTextStyle(
+          textColor: kIshigakiGrey,
+          style: NativeTemplateFontStyle.normal,
+          size: 14.0,
+        ),
+      ),
+    )..load();
   }
 
   // 入力が変更された際に呼び出される（Debounce処理）
@@ -120,6 +169,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
     final isEn = Localizations.localeOf(context).languageCode == 'en';
 
@@ -130,7 +180,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
             color: Colors.white,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -157,9 +207,9 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                             size: 20,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            '検索条件',
-                            style: TextStyle(
+                          Text(
+                            l10n.searchCriteria,
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               color: kUrushiBlack,
                             ),
@@ -176,12 +226,12 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: kSengokuGold.withValues(alpha: 0.1),
+                                color: kSengokuGold.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(10),
                               ),
-                              child: const Text(
-                                '適用中',
-                                style: TextStyle(
+                              child: Text(
+                                l10n.applying,
+                                style: const TextStyle(
                                   fontSize: 10,
                                   color: kSengokuGold,
                                 ),
@@ -209,18 +259,20 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
                         value: _selectedPrefId,
-                        decoration: const InputDecoration(
-                          labelText: '都道府県',
-                          prefixIcon: Icon(
+                        decoration: InputDecoration(
+                          labelText: l10n.selectPrefecture,
+                          prefixIcon: const Icon(
                             Icons.map_outlined,
                             color: kSengokuGold,
                           ),
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                         ),
                         items: _prefectures.map((pref) {
+                          String label = isEn ? pref['en']! : pref['ja']!;
+                          if (pref['id'] == '') label = l10n.all;
                           return DropdownMenuItem(
                             value: pref['id'],
-                            child: Text(isEn ? pref['en']! : pref['ja']!),
+                            child: Text(label),
                           );
                         }).toList(),
                         onChanged: (val) {
@@ -232,7 +284,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                       TextField(
                         controller: _castleController,
                         decoration: InputDecoration(
-                          labelText: '城名で検索',
+                          labelText: l10n.searchByCastleName,
                           prefixIcon: Padding(
                             padding: const EdgeInsets.all(12),
                             child: WafuIcon(
@@ -243,7 +295,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                             ),
                           ),
                           border: const OutlineInputBorder(),
-                          hintText: '例: 姫路城',
+                          hintText: l10n.exampleCastle,
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -264,22 +316,22 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                                 }
                               },
                               child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: '開始日',
-                                  prefixIcon: Icon(
+                                decoration: InputDecoration(
+                                  labelText: l10n.startDate,
+                                  prefixIcon: const Icon(
                                     Icons.calendar_today,
                                     size: 18,
                                     color: kSengokuGold,
                                   ),
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
+                                  border: const OutlineInputBorder(),
+                                  contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 8,
                                   ),
                                 ),
                                 child: Text(
                                   _fromDate == null
-                                      ? '指定なし'
+                                      ? l10n.notSpecified
                                       : DateFormat(
                                           'yyyy/MM/dd',
                                         ).format(_fromDate!),
@@ -307,22 +359,22 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                                 }
                               },
                               child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: '終了日',
-                                  prefixIcon: Icon(
+                                decoration: InputDecoration(
+                                  labelText: l10n.endDate,
+                                  prefixIcon: const Icon(
                                     Icons.calendar_today,
                                     size: 18,
                                     color: kSengokuGold,
                                   ),
-                                  border: OutlineInputBorder(),
-                                  contentPadding: EdgeInsets.symmetric(
+                                  border: const OutlineInputBorder(),
+                                  contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 12,
                                     vertical: 8,
                                   ),
                                 ),
                                 child: Text(
                                   _toDate == null
-                                      ? '指定なし'
+                                      ? l10n.notSpecified
                                       : DateFormat(
                                           'yyyy/MM/dd',
                                         ).format(_toDate!),
@@ -351,9 +403,9 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                               _applyFilters();
                             },
                             icon: const Icon(Icons.clear_all, size: 16),
-                            label: const Text(
-                              '検索条件をクリア',
-                              style: TextStyle(fontSize: 12),
+                            label: Text(
+                              l10n.clearCriteria,
+                              style: const TextStyle(fontSize: 12),
                             ),
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.red,
@@ -378,6 +430,8 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                 .collection('user_logs')
                 .where('userId', isEqualTo: user?.uid ?? 'guest')
                 .orderBy('visitDate', descending: true)
+                .orderBy('updatedAt', descending: true)
+                .orderBy(FieldPath.documentId)
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.hasError)
@@ -406,7 +460,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                             color: Colors.grey[300],
                           ),
                           const SizedBox(height: 16),
-                          const Text('該当する記録が見つかりませんでした。'),
+                          Text(l10n.noMatchingRecords),
                         ],
                       ),
                     );
@@ -414,10 +468,15 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
 
                   return ListView.separated(
                     padding: const EdgeInsets.all(16),
-                    itemCount: filteredLogs.length,
+                    itemCount:
+                        filteredLogs.length + (_nativeAdIsLoaded ? 1 : 0),
                     separatorBuilder: (context, index) =>
                         const SizedBox(height: 12),
                     itemBuilder: (context, index) {
+                      if (index == filteredLogs.length) {
+                        return _buildAdSection(context);
+                      }
+
                       final log = filteredLogs[index];
                       final visit = log['visit'] as models.Visit;
                       final title = log['title'] as String;
@@ -496,6 +555,57 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
             },
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildAdSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                border: Border.all(color: kIshigakiGrey, width: 0.5),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'PR',
+                style: TextStyle(fontSize: 10, color: kIshigakiGrey),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              l10n.recommendedContent,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: kIshigakiGrey,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: AdWidget(ad: _nativeAd!),
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }

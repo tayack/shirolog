@@ -56,6 +56,7 @@ class Visit {
   final List<String> photoUrls;
   final String? personalNote;
   final DateTime visitDate;
+  final DateTime? updatedAt;
 
   Visit({
     required this.id,
@@ -64,18 +65,21 @@ class Visit {
     required this.photoUrls,
     this.personalNote,
     required this.visitDate,
+    this.updatedAt,
   });
 
   factory Visit.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? {};
-    final timestamp = data['visitDate'] as Timestamp?;
+    final visitTimestamp = data['visitDate'] as Timestamp?;
+    final updatedTimestamp = data['updatedAt'] as Timestamp?;
     return Visit(
       id: doc.id,
       userId: data['userId'] ?? '',
       spotId: data['spotId'] ?? '',
       photoUrls: List<String>.from(data['photoUrls'] ?? []),
       personalNote: data['personalNote'],
-      visitDate: timestamp?.toDate() ?? DateTime.now(),
+      visitDate: visitTimestamp?.toDate() ?? DateTime.now(),
+      updatedAt: updatedTimestamp?.toDate(),
     );
   }
 
@@ -86,6 +90,7 @@ class Visit {
       'photoUrls': photoUrls,
       'personalNote': personalNote,
       'visitDate': Timestamp.fromDate(visitDate),
+      'updatedAt': FieldValue.serverTimestamp(), // 保存・更新時に常にサーバー時刻で更新
     };
   }
 }

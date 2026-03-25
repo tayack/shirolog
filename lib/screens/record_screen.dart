@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../l10n/app_localizations.dart';
 import '../models.dart' as models;
 import '../theme.dart';
@@ -17,14 +18,16 @@ class RecordScreen extends StatefulWidget {
   final String initialCastleName;
   final String? initialSpotId;
   final RecordMode initialMode;
-  final List<String>? swipeSpotIds; // スワイプ用のIDリスト
-  final int swipeInitialIndex; // 開始インデックス
+  final int resetTrigger;
+  final List<String>? swipeSpotIds;
+  final int swipeInitialIndex;
 
   const RecordScreen({
     super.key,
     this.initialCastleName = '',
     this.initialSpotId,
     this.initialMode = RecordMode.newRecord,
+    this.resetTrigger = 0,
     this.swipeSpotIds,
     this.swipeInitialIndex = 0,
   });
@@ -45,16 +48,26 @@ class _RecordScreenState extends State<RecordScreen> {
   String? _selectedPrefId;
   DateTime _selectedDate = DateTime.now();
 
-  // スワイプ用
   PageController? _pageController;
   int _currentIndex = 0;
 
-  // 写真用
   File? _imageFile;
   String? _uploadedImageUrl;
   bool _isUploading = false;
 
-  final List<Map<String, String>> _prefectures = [
+  List<models.Mission> _completedMissionsInThisSession = [];
+
+  static final Map<String, models.Visit> _visitCache = {};
+  static final Map<String, models.Spot> _spotCache = {};
+
+  NativeAd? _nativeAd;
+  bool _nativeAdIsLoaded = false;
+
+  final String _adUnitId = Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/2247696110'
+      : 'ca-app-pub-3940256099942544/3986624511';
+
+  static const List<Map<String, String>> _prefectures = [
     {'id': '01', 'ja': '北海道', 'en': 'Hokkaido'},
     {'id': '02', 'ja': '青森県', 'en': 'Aomori'},
     {'id': '03', 'ja': '岩手県', 'en': 'Iwate'},
@@ -84,7 +97,7 @@ class _RecordScreenState extends State<RecordScreen> {
     {'id': '27', 'ja': '大阪府', 'en': 'Osaka'},
     {'id': '28', 'ja': '兵庫県', 'en': 'Hyogo'},
     {'id': '29', 'ja': '奈良県', 'en': 'Nara'},
-    {'id': '30', 'ja': '和歌山県', 'en': 'Wakayama'},
+    {'id': '30', 'ja': '和歌山県', 'en': 'Wayakama'},
     {'id': '31', 'ja': '鳥取県', 'en': 'Tottori'},
     {'id': '32', 'ja': '島根県', 'en': 'Shimane'},
     {'id': '33', 'ja': '岡山県', 'en': 'Okayama'},
@@ -120,11 +133,103 @@ class _RecordScreenState extends State<RecordScreen> {
     if (widget.swipeSpotIds != null) {
       _currentIndex = widget.swipeInitialIndex;
       _pageController = PageController(initialPage: _currentIndex);
-      _selectedSpotId = widget.swipeSpotIds![_currentIndex];
     }
+    _loadAd();
+  }
 
-    if (_selectedSpotId != null) {
-      _loadExistingLog(_selectedSpotId!);
+  void _loadAd() {
+    _nativeAd = NativeAd(
+      adUnitId: _adUnitId,
+      listener: NativeAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _nativeAdIsLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+      request: const AdRequest(),
+      nativeTemplateStyle: NativeTemplateStyle(
+        templateType: TemplateType.small,
+        mainBackgroundColor: Colors.white,
+        cornerRadius: 12.0,
+        callToActionTextStyle: NativeTemplateTextStyle(
+          textColor: Colors.white,
+          backgroundColor: kSengokuGold,
+          style: NativeTemplateFontStyle.bold,
+          size: 16.0,
+        ),
+        primaryTextStyle: NativeTemplateTextStyle(
+          textColor: kUrushiBlack,
+          style: NativeTemplateFontStyle.bold,
+          size: 16.0,
+        ),
+        secondaryTextStyle: NativeTemplateTextStyle(
+          textColor: kIshigakiGrey,
+          style: NativeTemplateFontStyle.normal,
+          size: 14.0,
+        ),
+        tertiaryTextStyle: NativeTemplateTextStyle(
+          textColor: kIshigakiGrey,
+          style: NativeTemplateFontStyle.normal,
+          size: 12.0,
+        ),
+      ),
+    )..load();
+  }
+
+  void _resetToInitialState() {
+    setState(() {
+      _currentMode = RecordMode.newRecord;
+      _selectedSpotId = null;
+      _castleController.text = '';
+      _commentController.clear();
+      _imageFile = null;
+      _uploadedImageUrl = null;
+      _selectedDate = DateTime.now();
+      _dateController.text = DateFormat('yyyy/MM/dd').format(_selectedDate);
+      _alreadyVisited = false;
+      _selectedPrefId = null;
+      _allSpotsInPref = [];
+      _filteredSpots = [];
+      _existingDocId = null;
+      _pageController?.dispose();
+      _pageController = null;
+    });
+  }
+
+  @override
+  void didUpdateWidget(RecordScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.resetTrigger != oldWidget.resetTrigger) {
+      if (widget.initialSpotId == null && widget.swipeSpotIds == null) {
+        _resetToInitialState();
+      } else {
+        setState(() {
+          _castleController.text = widget.initialCastleName;
+          _currentMode = widget.initialMode;
+          _selectedSpotId = widget.initialSpotId;
+          _alreadyVisited = false;
+          _existingDocId = null;
+          _commentController.clear();
+          _uploadedImageUrl = null;
+          _imageFile = null;
+          _selectedDate = DateTime.now();
+          _dateController.text = DateFormat('yyyy/MM/dd').format(_selectedDate);
+
+          if (widget.swipeSpotIds != null) {
+            _currentIndex = widget.swipeInitialIndex;
+            _pageController?.dispose();
+            _pageController = PageController(initialPage: _currentIndex);
+            _selectedSpotId = widget.swipeSpotIds![_currentIndex];
+          }
+        });
+        if (_selectedSpotId != null && _currentMode != RecordMode.view) {
+          _loadExistingLog(_selectedSpotId!);
+        }
+      }
     }
   }
 
@@ -135,6 +240,7 @@ class _RecordScreenState extends State<RecordScreen> {
     _dateController.dispose();
     _commentController.dispose();
     _pageController?.dispose();
+    _nativeAd?.dispose();
     super.dispose();
   }
 
@@ -188,113 +294,74 @@ class _RecordScreenState extends State<RecordScreen> {
     }
   }
 
-  @override
-  void didUpdateWidget(RecordScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.initialSpotId != oldWidget.initialSpotId ||
-        widget.initialMode != oldWidget.initialMode ||
-        widget.initialCastleName != oldWidget.initialCastleName ||
-        widget.swipeSpotIds != oldWidget.swipeSpotIds) {
-      setState(() {
-        _castleController.text = widget.initialCastleName;
-        _currentMode = widget.initialMode;
-        _selectedSpotId = widget.initialSpotId;
-        _alreadyVisited = false;
-        _existingDocId = null;
-        _commentController.clear();
-        _uploadedImageUrl = null;
-        _imageFile = null;
-        _selectedDate = DateTime.now();
-        _dateController.text = DateFormat('yyyy/MM/dd').format(_selectedDate);
-
-        if (widget.swipeSpotIds != null) {
-          _currentIndex = widget.swipeInitialIndex;
-          _pageController?.jumpToPage(_currentIndex);
-          _selectedSpotId = widget.swipeSpotIds![_currentIndex];
-        }
-      });
-      if (_selectedSpotId != null) {
-        _loadExistingLog(_selectedSpotId!);
-      }
-    }
-  }
-
-  Future<void> _loadExistingLog(String spotId) async {
+  Future<void> _loadExistingLog(
+    String spotId, {
+    bool forceRefresh = false,
+  }) async {
     final user = FirebaseAuth.instance.currentUser;
     final userId = user?.uid ?? 'guest';
     final fixedDocId = '${userId}_$spotId';
 
-    // 1. まずは固定ID（新しい形式）で取得を試みる
-    var doc = await FirebaseFirestore.instance
-        .collection('user_logs')
-        .doc(fixedDocId)
-        .get();
-
-    DocumentSnapshot? targetDoc;
-    if (doc.exists) {
-      targetDoc = doc;
+    models.Visit? visit;
+    if (!forceRefresh && _visitCache.containsKey(fixedDocId)) {
+      visit = _visitCache[fixedDocId];
     } else {
-      // 2. 見つからない場合は、従来の userId と spotId のペアで検索（古いデータ用）
-      final snapshot = await FirebaseFirestore.instance
+      var doc = await FirebaseFirestore.instance
           .collection('user_logs')
-          .where('userId', isEqualTo: userId)
-          .where('spotId', isEqualTo: spotId)
-          .limit(1)
+          .doc(fixedDocId)
           .get();
-      if (snapshot.docs.isNotEmpty) {
-        targetDoc = snapshot.docs.first;
+      DocumentSnapshot? targetDoc;
+      if (doc.exists) {
+        targetDoc = doc;
+      } else {
+        final snapshot = await FirebaseFirestore.instance
+            .collection('user_logs')
+            .where('userId', isEqualTo: userId)
+            .where('spotId', isEqualTo: spotId)
+            .limit(1)
+            .get();
+        if (snapshot.docs.isNotEmpty) targetDoc = snapshot.docs.first;
+      }
+      if (targetDoc != null && targetDoc.exists) {
+        visit = models.Visit.fromFirestore(
+          targetDoc as DocumentSnapshot<Map<String, dynamic>>,
+        );
+        _visitCache[fixedDocId] = visit;
       }
     }
 
-    final spotDoc = await FirebaseFirestore.instance
-        .collection('master_spots')
-        .doc(spotId)
-        .get();
-
-    if (targetDoc != null && targetDoc.exists) {
-      final v = models.Visit.fromFirestore(
-        targetDoc as DocumentSnapshot<Map<String, dynamic>>,
-      );
-      setState(() {
-        _existingDocId = targetDoc!.id;
-        _commentController.text = v.personalNote ?? '';
-        _selectedDate = v.visitDate;
-        _dateController.text = DateFormat('yyyy/MM/dd').format(v.visitDate);
-        _uploadedImageUrl = v.photoUrls.isNotEmpty ? v.photoUrls.first : null;
-
-        if (spotDoc.exists) {
-          final spot = models.Spot.fromFirestore(
-            spotDoc as DocumentSnapshot<Map<String, dynamic>>,
-          );
-          _selectedPrefId = spot?.prefId;
-          if (spot != null) {
-            _castleController.text = spot.getName(context);
-          }
-        }
-
-        if (_currentMode == RecordMode.newRecord) {
-          _alreadyVisited = true;
-        }
-      });
+    models.Spot? spot;
+    if (_spotCache.containsKey(spotId)) {
+      spot = _spotCache[spotId];
     } else {
-      // データがない場合（新規登録状態にする）
-      setState(() {
-        _existingDocId = null;
-        _commentController.clear();
-        _selectedDate = DateTime.now();
-        _dateController.text = DateFormat('yyyy/MM/dd').format(_selectedDate);
-        _uploadedImageUrl = null;
-        if (spotDoc.exists) {
-          final spot = models.Spot.fromFirestore(
-            spotDoc as DocumentSnapshot<Map<String, dynamic>>,
-          );
-          _selectedPrefId = spot?.prefId;
-          if (spot != null) {
-            _castleController.text = spot.getName(context);
-          }
-        }
-      });
+      final spotDoc = await FirebaseFirestore.instance
+          .collection('master_spots')
+          .doc(spotId)
+          .get();
+      if (spotDoc.exists) {
+        spot = models.Spot.fromFirestore(
+          spotDoc as DocumentSnapshot<Map<String, dynamic>>,
+        );
+        if (spot != null) _spotCache[spotId] = spot;
+      }
     }
+
+    setState(() {
+      if (visit != null) {
+        _existingDocId = visit.id;
+        _commentController.text = visit.personalNote ?? '';
+        _selectedDate = visit.visitDate;
+        _dateController.text = DateFormat('yyyy/MM/dd').format(visit.visitDate);
+        _uploadedImageUrl = visit.photoUrls.isNotEmpty
+            ? visit.photoUrls.first
+            : null;
+        if (spot != null) {
+          _selectedPrefId = spot.prefId;
+          _castleController.text = spot.getName(context);
+        }
+        if (_currentMode == RecordMode.newRecord) _alreadyVisited = true;
+      }
+    });
   }
 
   Future<void> _pickImage() async {
@@ -303,48 +370,46 @@ class _RecordScreenState extends State<RecordScreen> {
       source: ImageSource.gallery,
       imageQuality: 70,
     );
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
-    }
+    if (pickedFile != null) setState(() => _imageFile = File(pickedFile.path));
   }
 
   Future<String?> _uploadImage() async {
     if (_imageFile == null) return _uploadedImageUrl;
-
-    try {
-      final user = FirebaseAuth.instance.currentUser;
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('user_photos')
-          .child(user?.uid ?? 'guest')
-          .child(fileName);
-
-      await storageRef.putFile(_imageFile!);
-      final url = await storageRef.getDownloadURL();
-      return url;
-    } catch (e) {
-      debugPrint('Upload error: $e');
-      rethrow;
-    }
+    final storageRef = FirebaseStorage.instance
+        .ref()
+        .child('user_photos')
+        .child(FirebaseAuth.instance.currentUser?.uid ?? 'guest')
+        .child('${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await storageRef.putFile(_imageFile!);
+    return await storageRef.getDownloadURL();
   }
 
-  Future<void> _shareTo(String platform) async {
+  Future<void> _shareTo(
+    String castleName,
+    String dateText,
+    String comment, {
+    String? platform,
+  }) async {
     final l10n = AppLocalizations.of(context);
     if (l10n == null) return;
-
     String shareText = '';
+    String missionBonusText = '';
+    if (_completedMissionsInThisSession.isNotEmpty) {
+      final missionNames = _completedMissionsInThisSession
+          .map((m) => '「${m.getTitle(context)}」')
+          .join('、');
+      missionBonusText =
+          '${l10n.missionAccomplishedSharePrefix}$missionNames${l10n.missionCompletedShareSuffix}';
+    }
     try {
-      shareText = l10n.shareText(
-        _castleController.text,
-        _dateController.text,
-        _commentController.text,
-      );
+      // お城名のハッシュタグを追加
+      shareText =
+          missionBonusText +
+          l10n.shareText(castleName, dateText, comment) +
+          '\n#$castleName';
     } catch (e) {
       shareText =
-          '【登城記録】${_castleController.text} に行ってきました！ (${_dateController.text})\n\n${_commentController.text}\n\n#城ログ #城巡り';
+          '${missionBonusText}【登城記録】$castleName に行ってきました！ ($dateText)\n\n$comment\n\n#城ログ #城巡り #$castleName';
     }
 
     if (platform == 'X') {
@@ -373,83 +438,105 @@ class _RecordScreenState extends State<RecordScreen> {
 
   Future<void> _saveRecord() async {
     if (_isUploading) return;
+    if (_selectedSpotId == null) return;
 
-    final l10n = AppLocalizations.of(context);
-    if (l10n == null) return;
-
-    final user = FirebaseAuth.instance.currentUser;
-    final userId = user?.uid ?? 'guest';
-    final spotId = _selectedSpotId ?? 'unknown';
-    final docId = '${userId}_$spotId';
-
+    final l10n = AppLocalizations.of(context)!;
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+    final spotId = _selectedSpotId!;
+    final fixedDocId = '${userId}_$spotId';
     setState(() => _isUploading = true);
-
     try {
       final imageUrl = await _uploadImage();
-
       final data = {
         'userId': userId,
         'spotId': spotId,
         'personalNote': _commentController.text,
         'visitDate': Timestamp.fromDate(_selectedDate),
         'photoUrls': imageUrl != null ? [imageUrl] : [],
+        'updatedAt': FieldValue.serverTimestamp(),
       };
+
+      if (_existingDocId != null && _existingDocId != fixedDocId) {
+        await FirebaseFirestore.instance
+            .collection('user_logs')
+            .doc(_existingDocId!)
+            .delete();
+      }
 
       await FirebaseFirestore.instance
           .collection('user_logs')
-          .doc(docId)
+          .doc(fixedDocId)
           .set(data, SetOptions(merge: true));
+
+      final newVisit = models.Visit(
+        id: fixedDocId,
+        userId: userId,
+        spotId: spotId,
+        photoUrls: imageUrl != null ? [imageUrl] : [],
+        personalNote: _commentController.text,
+        visitDate: _selectedDate,
+      );
+      _visitCache[fixedDocId] = newVisit;
+
+      _completedMissionsInThisSession = await _checkNewlyCompletedMissions(
+        spotId,
+      );
 
       setState(() {
         _currentMode = RecordMode.view;
         _uploadedImageUrl = imageUrl;
-        _imageFile = null;
-        _existingDocId = docId;
+        _existingDocId = fixedDocId;
         _isUploading = false;
       });
-
       if (mounted) {
-        showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: Text(l10n.shareTitle),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(l10n.shareContent),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildSnsButton(l10n.shareTwitter, Icons.close),
-                    _buildSnsButton(l10n.shareOthers, Icons.share),
-                  ],
-                ),
-              ],
+        if (_completedMissionsInThisSession.isNotEmpty) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (c) => _MissionAccomplishedDialog(
+              missions: _completedMissionsInThisSession,
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  context
-                      .findAncestorStateOfType<MainNavigationScreenState>()
-                      ?.setSelectedIndex(0);
-                },
-                child: Text(l10n.shareLater),
-              ),
-            ],
-          ),
-        );
+          );
+        }
+        _showShareDialog(l10n);
       }
     } catch (e) {
       setState(() => _isUploading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('保存に失敗しました: $e')));
-      }
     }
+  }
+
+  void _showShareDialog(AppLocalizations l10n) {
+    showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(l10n.shareTitle),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(l10n.shareContent),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _buildSnsButton(l10n.shareTwitter, Icons.close),
+                _buildSnsButton(l10n.shareOthers, Icons.share),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(c);
+              context
+                  .findAncestorStateOfType<MainNavigationScreenState>()
+                  ?.setSelectedIndex(0);
+            },
+            child: Text(l10n.shareLater),
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildSnsButton(String label, IconData icon) {
@@ -458,7 +545,12 @@ class _RecordScreenState extends State<RecordScreen> {
     return InkWell(
       onTap: () {
         Navigator.pop(context);
-        _shareTo(label == shareTwitterLabel ? 'X' : 'Others');
+        _shareTo(
+          _castleController.text,
+          _dateController.text,
+          _commentController.text,
+          platform: label == shareTwitterLabel ? 'X' : 'Others',
+        );
         context
             .findAncestorStateOfType<MainNavigationScreenState>()
             ?.setSelectedIndex(0);
@@ -466,7 +558,7 @@ class _RecordScreenState extends State<RecordScreen> {
       child: Column(
         children: [
           CircleAvatar(
-            backgroundColor: kSengokuGold.withValues(alpha: 0.1),
+            backgroundColor: kSengokuGold.withOpacity(0.1),
             child: Icon(icon, color: kSengokuGold),
           ),
           const SizedBox(height: 4),
@@ -476,47 +568,80 @@ class _RecordScreenState extends State<RecordScreen> {
     );
   }
 
-  Future<void> _deleteRecord() async {
+  Future<List<models.Mission>> _checkNewlyCompletedMissions(
+    String spotId,
+  ) async {
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+    final mSnapshot = await FirebaseFirestore.instance
+        .collection('master_missions')
+        .get();
+    final missions = mSnapshot.docs
+        .map((d) => models.Mission.fromFirestore(d))
+        .toList();
+    final lSnapshot = await FirebaseFirestore.instance
+        .collection('user_logs')
+        .where('userId', isEqualTo: userId)
+        .get();
+    final visits = lSnapshot.docs
+        .map((d) => models.Visit.fromFirestore(d))
+        .toList();
+    List<models.Mission> newlyCompleted = [];
+    for (var m in missions) {
+      if (!m.targetSpotIds.contains(spotId)) continue;
+      final visitsWithoutCurrent = visits
+          .where((v) => v.spotId != spotId)
+          .toList();
+      if (m.getAchievedCount(visitsWithoutCurrent) != m.targetSpotIds.length &&
+          m.getAchievedCount(visits) == m.targetSpotIds.length)
+        newlyCompleted.add(m);
+    }
+    return newlyCompleted;
+  }
+
+  Future<void> _deleteRecord(String docId, String spotId) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('ログの削除'),
-        content: const Text('この登城記録を削除してもよろしいですか？\n取り消すことはできません。'),
+      builder: (c) => AlertDialog(
+        title: Text(l10n.deleteLog),
+        content: Text(l10n.deleteConfirm),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('キャンセル'),
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(l10n.cancel),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('削除する'),
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(l10n.delete),
           ),
         ],
       ),
     );
-
-    if (confirm == true && _existingDocId != null) {
+    if (confirm == true) {
       await FirebaseFirestore.instance
           .collection('user_logs')
-          .doc(_existingDocId!)
+          .doc(docId)
           .delete();
-      if (mounted) {
+
+      final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+      _visitCache.remove('${userId}_$spotId');
+
+      if (mounted)
         context
             .findAncestorStateOfType<MainNavigationScreenState>()
             ?.setSelectedIndex(2);
-      }
     }
   }
 
-  String _getPrefectureName(String? prefId) {
+  static String _getPrefectureNameStatic(BuildContext context, String? prefId) {
     if (prefId == null) return '-';
     final pref = _prefectures.firstWhere(
       (p) => p['id'] == prefId,
       orElse: () => {'ja': '-', 'en': '-'},
     );
-    final isEn = Localizations.maybeLocaleOf(context)?.languageCode == 'en';
-    return isEn ? pref['en']! : pref['ja']!;
+    return Localizations.maybeLocaleOf(context)?.languageCode == 'en'
+        ? pref['en']!
+        : pref['ja']!;
   }
 
   @override
@@ -524,403 +649,344 @@ class _RecordScreenState extends State<RecordScreen> {
     final l10n = AppLocalizations.of(context);
     if (l10n == null) return const Center(child: CircularProgressIndicator());
 
-    if (_currentMode == RecordMode.view && widget.swipeSpotIds != null) {
-      return PageView.builder(
-        controller: _pageController,
-        itemCount: widget.swipeSpotIds!.length,
-        onPageChanged: (index) {
-          setState(() {
-            _currentIndex = index;
-            _selectedSpotId = widget.swipeSpotIds![index];
-          });
-          _loadExistingLog(_selectedSpotId!);
-        },
-        itemBuilder: (context, index) => _buildContent(l10n),
-      );
+    if (_currentMode == RecordMode.view) {
+      if (widget.swipeSpotIds != null) {
+        return PageView.builder(
+          key: ValueKey('pageview_${widget.resetTrigger}'),
+          controller: _pageController,
+          itemCount: widget.swipeSpotIds!.length,
+          onPageChanged: (index) {
+            setState(() {
+              _currentIndex = index;
+              _selectedSpotId = widget.swipeSpotIds![index];
+            });
+          },
+          itemBuilder: (context, index) {
+            final spotId = widget.swipeSpotIds![index];
+            return _RecordDetailView(
+              key: ValueKey('detail_$spotId'),
+              spotId: spotId,
+              onEdit: () {
+                _loadExistingLog(spotId);
+                setState(() => _currentMode = RecordMode.edit);
+              },
+              onDelete: (docId) => _deleteRecord(docId, spotId),
+              onShare: (castleName, dateText, comment) =>
+                  _shareTo(castleName, dateText, comment),
+            );
+          },
+        );
+      } else if (_selectedSpotId != null) {
+        return _RecordDetailView(
+          key: ValueKey(
+            'detail_single_${_selectedSpotId}_${widget.resetTrigger}',
+          ),
+          spotId: _selectedSpotId!,
+          onEdit: () {
+            _loadExistingLog(_selectedSpotId!);
+            setState(() => _currentMode = RecordMode.edit);
+          },
+          onDelete: (docId) => _deleteRecord(docId, _selectedSpotId!),
+          onShare: (castleName, dateText, comment) =>
+              _shareTo(castleName, dateText, comment),
+        );
+      }
     }
-
     return _buildContent(l10n);
   }
 
   Widget _buildContent(AppLocalizations l10n) {
     final isEn = Localizations.maybeLocaleOf(context)?.languageCode == 'en';
-    bool isReadOnly = _currentMode == RecordMode.view;
-    bool isNewRecord = _currentMode == RecordMode.newRecord;
-    bool canSave = _selectedSpotId != null && _castleController.text.isNotEmpty;
+    String screenTitle = (_currentMode == RecordMode.edit
+        ? l10n.editRecord
+        : l10n.newRecord);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                isReadOnly ? l10n.record : l10n.save,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (isReadOnly)
-                Row(
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.share, color: kSengokuGold),
-                      onPressed: () => _shareTo('General'),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        context
-                            .findAncestorStateOfType<
-                              MainNavigationScreenState
-                            >()
-                            ?.setSelectedIndex(2);
-                      },
-                      icon: const Icon(Icons.arrow_back, size: 18),
-                      label: const Text('一覧へ戻る'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: kIshigakiGrey,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
+          Text(
+            screenTitle,
+            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
-
-          Center(
-            child: GestureDetector(
-              onTap: isReadOnly || _isUploading ? null : _pickImage,
-              child: Container(
-                width: double.infinity,
-                height: 250,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                  image: _imageFile != null
-                      ? DecorationImage(
-                          image: FileImage(_imageFile!),
-                          fit: BoxFit.contain,
-                        )
-                      : (_uploadedImageUrl != null
-                            ? DecorationImage(
-                                image: NetworkImage(_uploadedImageUrl!),
-                                fit: BoxFit.contain,
-                              )
-                            : null),
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (_imageFile == null && _uploadedImageUrl == null)
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.add_a_photo,
-                            size: 40,
-                            color: Colors.grey[400],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            isReadOnly ? '写真なし' : '写真をアップロード',
-                            style: TextStyle(color: Colors.grey[600]),
-                          ),
-                        ],
-                      ),
-                    if (!isReadOnly &&
-                        (_imageFile != null || _uploadedImageUrl != null))
-                      Positioned(
-                        bottom: 8,
-                        right: 8,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black54,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.edit, color: Colors.white, size: 14),
-                              SizedBox(width: 4),
-                              Text(
-                                '写真を変更',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
+          GestureDetector(
+            onTap: _isUploading ? null : _pickImage,
+            child: Container(
+              width: double.infinity,
+              height: 250,
+              decoration: BoxDecoration(
+                color: Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+                image: _imageFile != null
+                    ? DecorationImage(
+                        image: FileImage(_imageFile!),
+                        fit: BoxFit.contain,
+                      )
+                    : (_uploadedImageUrl != null
+                          ? DecorationImage(
+                              image: NetworkImage(_uploadedImageUrl!),
+                              fit: BoxFit.contain,
+                            )
+                          : null),
               ),
+              child: _imageFile == null && _uploadedImageUrl == null
+                  ? const Center(
+                      child: Icon(
+                        Icons.add_a_photo,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    )
+                  : null,
             ),
           ),
           const SizedBox(height: 24),
-
-          if (isNewRecord)
-            Column(
-              children: [
-                DropdownButtonFormField<String>(
-                  value: _selectedPrefId,
-                  decoration: const InputDecoration(
-                    labelText: '都道府県を選択',
-                    prefixIcon: Icon(Icons.map_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _prefectures
-                      .map(
-                        (pref) => DropdownMenuItem(
-                          value: pref['id'],
-                          child: Text(isEn ? pref['en']! : pref['ja']!),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: _isUploading
-                      ? null
-                      : (val) {
-                          if (val != null) {
-                            setState(() {
-                              _selectedPrefId = val;
-                              _selectedSpotId = null;
-                              _castleController.clear();
-                              _alreadyVisited = false;
-                            });
-                            _fetchSpotsByPref(val);
-                          }
-                        },
-                ),
-                const SizedBox(height: 16),
-                ShiroSearchField(
-                  hintText: l10n.searchCastle,
-                  controller: _castleController,
-                  readOnly: _selectedPrefId == null || _isUploading,
-                  prefixIcon: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: WafuIcon(
-                      assetName: 'home',
-                      fallbackType: WafuIconType.tenshu,
-                      color: _selectedPrefId == null
-                          ? Colors.grey
-                          : kSengokuGold,
-                      size: 20,
+          if (_currentMode == RecordMode.newRecord) ...[
+            DropdownButtonFormField<String>(
+              value: _selectedPrefId,
+              decoration: InputDecoration(
+                labelText: l10n.selectPrefecture,
+                prefixIcon: const Icon(Icons.map_outlined, color: kSengokuGold),
+                border: const OutlineInputBorder(),
+              ),
+              items: _prefectures
+                  .map(
+                    (p) => DropdownMenuItem(
+                      value: p['id'],
+                      child: Text(isEn ? p['en']! : p['ja']!),
                     ),
-                  ),
-                  suffixIcon: _isLoadingSpots
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : null,
-                ),
-                if (_selectedPrefId != null && _filteredSpots.isNotEmpty)
-                  Container(
-                    constraints: const BoxConstraints(maxHeight: 250),
-                    margin: const EdgeInsets.only(top: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black12),
-                      borderRadius: BorderRadius.circular(8),
-                      color: Colors.white,
-                    ),
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      itemCount: _filteredSpots.length,
-                      itemBuilder: (c, i) {
-                        final spot = _filteredSpots[i];
-                        return RadioListTile<String>(
-                          value: spot.id,
-                          groupValue: _selectedSpotId,
-                          title: Text(spot.getDisplayName(context)),
-                          activeColor: kSengokuGold,
-                          onChanged: _isUploading
-                              ? null
-                              : (val) {
-                                  setState(() {
-                                    _selectedSpotId = val;
-                                    _castleController.text = spot.getName(
-                                      context,
-                                    );
-                                    _filteredSpots = [];
-                                    _alreadyVisited = false;
-                                  });
-                                  _loadExistingLog(spot.id);
-                                },
-                        );
-                      },
-                    ),
-                  ),
-                if (_alreadyVisited)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    margin: const EdgeInsets.only(top: 24),
-                    decoration: BoxDecoration(
-                      color: Colors.red[50],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: Colors.red.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.info_outline,
-                          color: Colors.red,
-                          size: 32,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          l10n.alreadyVisited,
-                          style: const TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () =>
-                              setState(() => _currentMode = RecordMode.view),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                          ),
-                          child: const Text('記録を表示・編集する'),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            )
-          else ...[
-            _buildDetailLabel(
-              isEn ? 'Prefecture' : '都道府県',
-              _getPrefectureName(_selectedPrefId),
-              icon: Icons.map_outlined,
+                  )
+                  .toList(),
+              onChanged: (v) {
+                if (v != null) {
+                  setState(() {
+                    _selectedPrefId = v;
+                    _selectedSpotId = null;
+                    _castleController.clear();
+                  });
+                  _fetchSpotsByPref(v);
+                }
+              },
             ),
             const SizedBox(height: 16),
-            _buildDetailLabel(
-              l10n.searchCastle,
+            ShiroSearchField(
+              hintText: l10n.searchCastle,
+              controller: _castleController,
+              readOnly: _selectedPrefId == null,
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(12),
+                child: WafuIcon(
+                  assetName: 'home',
+                  fallbackType: WafuIconType.tenshu,
+                  color: _selectedPrefId == null ? Colors.grey : kSengokuGold,
+                  size: 20,
+                ),
+              ),
+            ),
+            if (_filteredSpots.isNotEmpty)
+              Container(
+                constraints: const BoxConstraints(maxHeight: 200),
+                margin: const EdgeInsets.only(top: 8),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: _filteredSpots.length,
+                  itemBuilder: (c, i) => RadioListTile<String>(
+                    value: _filteredSpots[i].id,
+                    groupValue: _selectedSpotId,
+                    title: Text(_filteredSpots[i].getDisplayName(context)),
+                    activeColor: kSengokuGold,
+                    onChanged: (v) {
+                      setState(() {
+                        _selectedSpotId = v;
+                        _castleController.text = _filteredSpots[i].getName(
+                          context,
+                        );
+                        _filteredSpots = [];
+                      });
+                      _loadExistingLog(v!);
+                    },
+                  ),
+                ),
+              ),
+          ] else ...[
+            _buildLabelFieldStatic(
+              context,
+              l10n.selectPrefecture, // 都道府県
+              _getPrefectureNameStatic(context, _selectedPrefId),
+              Icons.map_outlined,
+            ),
+            const SizedBox(height: 16),
+            _buildLabelFieldStatic(
+              context,
+              l10n.searchCastle, // 城名
               _castleController.text,
-              icon: 'home',
+              'home',
             ),
           ],
-
           const SizedBox(height: 16),
-
-          if (!_alreadyVisited) ...[
-            if (isReadOnly)
-              _buildDetailLabel(
-                l10n.visitDate,
-                _dateController.text,
-                icon: Icons.calendar_today,
-              )
-            else
-              ShiroSearchField(
-                hintText: l10n.visitDate,
-                controller: _dateController,
-                readOnly: true,
-                prefixIcon: const Icon(Icons.calendar_today, size: 20),
-                onTap: _isUploading
-                    ? null
-                    : () async {
-                        final p = await showDatePicker(
-                          context: context,
-                          initialDate: _selectedDate,
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-                        if (p != null)
-                          setState(() {
-                            _selectedDate = p;
-                            _dateController.text = DateFormat(
-                              'yyyy/MM/dd',
-                            ).format(p);
-                          });
-                      },
+          if (_alreadyVisited && _currentMode == RecordMode.newRecord)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.red[50],
+                borderRadius: BorderRadius.circular(8),
               ),
+              child: Column(
+                children: [
+                  Text(
+                    l10n.alreadyVisited,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton(
+                    onPressed: () =>
+                        setState(() => _currentMode = RecordMode.view),
+                    child: Text(l10n.viewRecord),
+                  ),
+                ],
+              ),
+            )
+          else ...[
+            ShiroSearchField(
+              hintText: l10n.visitDate,
+              controller: _dateController,
+              readOnly: true,
+              prefixIcon: const Icon(
+                Icons.calendar_today,
+                size: 20,
+                color: kSengokuGold,
+              ),
+              onTap: () async {
+                final d = await showDatePicker(
+                  context: context,
+                  initialDate: _selectedDate,
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime.now(),
+                );
+                if (d != null)
+                  setState(() {
+                    _selectedDate = d;
+                    _dateController.text = DateFormat('yyyy/MM/dd').format(d);
+                  });
+              },
+            ),
             const SizedBox(height: 16),
-            if (isReadOnly)
-              _buildDetailLabel(
-                l10n.memo,
-                _commentController.text,
-                icon: Icons.notes,
-              )
-            else
-              TextField(
-                controller: _commentController,
-                maxLines: 4,
-                enabled: !_isUploading,
-                decoration: InputDecoration(
-                  hintText: l10n.memo,
-                  labelText: l10n.memo,
-                  prefixIcon: const Icon(Icons.notes, color: kSengokuGold),
-                  border: const OutlineInputBorder(),
-                ),
+            TextField(
+              controller: _commentController,
+              maxLines: 4,
+              decoration: InputDecoration(
+                hintText: l10n.memo,
+                prefixIcon: const Icon(Icons.notes, color: kSengokuGold),
+                border: const OutlineInputBorder(),
               ),
+            ),
             const SizedBox(height: 32),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: (_isUploading || (!isReadOnly && !canSave))
-                    ? Colors.grey
-                    : kSengokuGold,
+                backgroundColor: kSengokuGold,
                 foregroundColor: Colors.white,
                 minimumSize: const Size(double.infinity, 54),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              onPressed: _isUploading || (!isReadOnly && !canSave)
-                  ? null
-                  : (isReadOnly
-                        ? () => setState(() => _currentMode = RecordMode.edit)
-                        : _saveRecord),
+              onPressed: _saveRecord,
               child: _isUploading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        color: Colors.white,
-                        strokeWidth: 2,
-                      ),
-                    )
+                  ? const CircularProgressIndicator(color: Colors.white)
                   : Text(
-                      isReadOnly ? l10n.edit : l10n.save,
+                      l10n.save,
                       style: const TextStyle(
-                        fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
                     ),
             ),
-          ],
-          if (isReadOnly) ...[
-            const SizedBox(height: 16),
-            TextButton(
-              onPressed: _isUploading ? null : _deleteRecord,
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.red[700],
-                minimumSize: const Size(double.infinity, 44),
+            if (_currentMode == RecordMode.edit) ...[
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => setState(() => _currentMode = RecordMode.view),
+                child: Text(
+                  l10n.cancelEdit,
+                  style: const TextStyle(color: kIshigakiGrey),
+                ),
               ),
-              child: const Text('このログを削除する'),
-            ),
+            ],
           ],
+
+          // ネイティブ広告エリア
+          if (_nativeAdIsLoaded)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: kIshigakiGrey, width: 0.5),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'PR',
+                        style: TextStyle(fontSize: 10, color: kIshigakiGrey),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.recommendedContent,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: kIshigakiGrey,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 130, // Validator対策で130に設定
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: AdWidget(ad: _nativeAd!),
+                ),
+              ],
+            ),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildDetailLabel(String label, String value, {dynamic icon}) {
+  static Widget _buildLabelFieldStatic(
+    BuildContext context,
+    String label,
+    String value,
+    dynamic icon,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -945,7 +1011,7 @@ class _RecordScreenState extends State<RecordScreen> {
         const SizedBox(height: 8),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(color: Colors.black12),
             borderRadius: BorderRadius.circular(8),
@@ -955,6 +1021,388 @@ class _RecordScreenState extends State<RecordScreen> {
             value.isEmpty ? '-' : value,
             style: const TextStyle(fontSize: 16, color: kUrushiBlack),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecordDetailView extends StatefulWidget {
+  final String spotId;
+  final VoidCallback onEdit;
+  final Function(String docId) onDelete;
+  final Function(String castleName, String dateText, String comment) onShare;
+
+  const _RecordDetailView({
+    super.key,
+    required this.spotId,
+    required this.onEdit,
+    required this.onDelete,
+    required this.onShare,
+  });
+
+  @override
+  State<_RecordDetailView> createState() => _RecordDetailViewState();
+}
+
+class _RecordDetailViewState extends State<_RecordDetailView> {
+  models.Visit? _visit;
+  models.Spot? _spot;
+  bool _isLoading = true;
+
+  NativeAd? _nativeAd;
+  bool _nativeAdIsLoaded = false;
+
+  final String _adUnitId = Platform.isAndroid
+      ? 'ca-app-pub-3940256099942544/2247696110'
+      : 'ca-app-pub-3940256099942544/3986624511';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    _loadAd();
+  }
+
+  void _loadAd() {
+    _nativeAd = NativeAd(
+      adUnitId: _adUnitId,
+      listener: NativeAdListener(
+        onAdLoaded: (ad) {
+          setState(() {
+            _nativeAdIsLoaded = true;
+          });
+        },
+        onAdFailedToLoad: (ad, error) {
+          ad.dispose();
+        },
+      ),
+      request: const AdRequest(),
+      nativeTemplateStyle: NativeTemplateStyle(
+        templateType: TemplateType.small,
+        mainBackgroundColor: Colors.white,
+        cornerRadius: 12.0,
+        callToActionTextStyle: NativeTemplateTextStyle(
+          textColor: Colors.white,
+          backgroundColor: kSengokuGold,
+          style: NativeTemplateFontStyle.bold,
+          size: 16.0,
+        ),
+        primaryTextStyle: NativeTemplateTextStyle(
+          textColor: kUrushiBlack,
+          style: NativeTemplateFontStyle.bold,
+          size: 16.0,
+        ),
+        secondaryTextStyle: NativeTemplateTextStyle(
+          textColor: kIshigakiGrey,
+          style: NativeTemplateFontStyle.normal,
+          size: 14.0,
+        ),
+        tertiaryTextStyle: NativeTemplateTextStyle(
+          textColor: kIshigakiGrey,
+          style: NativeTemplateFontStyle.normal,
+          size: 12.0,
+        ),
+      ),
+    )..load();
+  }
+
+  @override
+  void dispose() {
+    _nativeAd?.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
+    final fixedDocId = '${userId}_${widget.spotId}';
+
+    try {
+      models.Visit? visit;
+      if (_RecordScreenState._visitCache.containsKey(fixedDocId)) {
+        visit = _RecordScreenState._visitCache[fixedDocId];
+      } else {
+        // 1. 固定IDで試行
+        var doc = await FirebaseFirestore.instance
+            .collection('user_logs')
+            .doc(fixedDocId)
+            .get();
+
+        if (doc.exists) {
+          visit = models.Visit.fromFirestore(
+            doc as DocumentSnapshot<Map<String, dynamic>>,
+          );
+        } else {
+          // 2. ランダムID（古いデータ）でのフォールバック試行
+          final snapshot = await FirebaseFirestore.instance
+              .collection('user_logs')
+              .where('userId', isEqualTo: userId)
+              .where('spotId', isEqualTo: widget.spotId)
+              .limit(1)
+              .get();
+          if (snapshot.docs.isNotEmpty) {
+            visit = models.Visit.fromFirestore(
+              snapshot.docs.first as DocumentSnapshot<Map<String, dynamic>>,
+            );
+          }
+        }
+        if (visit != null) {
+          _RecordScreenState._visitCache[fixedDocId] = visit;
+        }
+      }
+
+      models.Spot? spot;
+      if (_RecordScreenState._spotCache.containsKey(widget.spotId)) {
+        spot = _RecordScreenState._spotCache[widget.spotId];
+      } else {
+        final spotDoc = await FirebaseFirestore.instance
+            .collection('master_spots')
+            .doc(widget.spotId)
+            .get();
+        if (spotDoc.exists) {
+          spot = models.Spot.fromFirestore(
+            spotDoc as DocumentSnapshot<Map<String, dynamic>>,
+          );
+          if (spot != null) _RecordScreenState._spotCache[widget.spotId] = spot;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _visit = visit;
+          _spot = spot;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Container(
+        color: kOffWhite,
+        child: const Center(
+          child: CircularProgressIndicator(color: kSengokuGold),
+        ),
+      );
+    }
+
+    if (_spot == null) return const Center(child: Text('データが見つかりません'));
+
+    final l10n = AppLocalizations.of(context)!;
+    final castleName = _spot!.getName(context);
+    final dateText = _visit != null
+        ? DateFormat('yyyy/MM/dd').format(_visit!.visitDate)
+        : '-';
+    final comment = _visit?.personalNote ?? '';
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                l10n.record,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.share, color: kSengokuGold),
+                onPressed: () => widget.onShare(castleName, dateText, comment),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          Container(
+            width: double.infinity,
+            height: 250,
+            decoration: BoxDecoration(
+              color: Colors.grey[200],
+              borderRadius: BorderRadius.circular(12),
+              image: (_visit?.photoUrls.isNotEmpty ?? false)
+                  ? DecorationImage(
+                      image: NetworkImage(_visit!.photoUrls.first),
+                      fit: BoxFit.contain,
+                    )
+                  : null,
+            ),
+            child: (_visit?.photoUrls.isEmpty ?? true)
+                ? const Center(
+                    child: Icon(
+                      Icons.fort_outlined,
+                      size: 40,
+                      color: Colors.grey,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 24),
+          _RecordScreenState._buildLabelFieldStatic(
+            context,
+            l10n.selectPrefecture, // 都道府県
+            _RecordScreenState._getPrefectureNameStatic(context, _spot!.prefId),
+            Icons.map_outlined,
+          ),
+          const SizedBox(height: 16),
+          _RecordScreenState._buildLabelFieldStatic(
+            context,
+            l10n.searchCastle, // 城名
+            castleName,
+            'home',
+          ),
+          const SizedBox(height: 16),
+          _RecordScreenState._buildLabelFieldStatic(
+            context,
+            l10n.visitDate,
+            dateText,
+            Icons.calendar_today,
+          ),
+          const SizedBox(height: 16),
+          _RecordScreenState._buildLabelFieldStatic(
+            context,
+            l10n.memo,
+            comment.isEmpty ? '-' : comment,
+            Icons.notes,
+          ),
+          const SizedBox(height: 32),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: kSengokuGold,
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: widget.onEdit,
+            child: Text(
+              l10n.edit,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () => widget.onDelete(_visit?.id ?? ''),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              minimumSize: const Size(double.infinity, 54),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: Text(
+              l10n.deleteLog,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+
+          // ネイティブ広告エリア
+          if (_nativeAdIsLoaded)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 32),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: kIshigakiGrey, width: 0.5),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: const Text(
+                        'PR',
+                        style: TextStyle(fontSize: 10, color: kIshigakiGrey),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      l10n.recommendedContent,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: kIshigakiGrey,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  height: 130, // Validator対策で130に設定
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: AdWidget(ad: _nativeAd!),
+                ),
+              ],
+            ),
+          const SizedBox(height: 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionAccomplishedDialog extends StatelessWidget {
+  final List<models.Mission> missions;
+  const _MissionAccomplishedDialog({required this.missions});
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AlertDialog(
+      title: Text(
+        l10n.missionAccomplished,
+        textAlign: TextAlign.center,
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 24),
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const WafuIcon(
+            assetName: 'kabuto',
+            fallbackType: WafuIconType.kabuto,
+            color: kSengokuGold,
+            size: 64,
+          ),
+          const SizedBox(height: 16),
+          ...missions.map(
+            (m) => Text(
+              '「${m.getTitle(context)}」',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(l10n.missionCompletedMessage),
+        ],
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(l10n.bravo),
         ),
       ],
     );
