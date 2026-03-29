@@ -1,10 +1,12 @@
-import 'dart:io';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../l10n/app_localizations.dart';
 import '../main.dart';
 import '../theme.dart';
+import '../ad_helper.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -16,10 +18,6 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
-
-  final String _adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
 
   @override
   void initState() {
@@ -35,7 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _loadAd() {
     _nativeAd = NativeAd(
-      adUnitId: _adUnitId,
+      adUnitId: AdHelper.settingsNativeAdUnitId,
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           setState(() {
@@ -130,10 +128,90 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _handleDeleteAccount() async {
+    final l10n = AppLocalizations.of(context)!;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: Text(l10n.deleteAccountTitle),
+        content: Text(l10n.deleteAccountConfirmation),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c, false),
+            child: Text(l10n.cancel),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(c, true),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    try {
+      // 1. ユーザーデータの削除 (Firestore)
+      final logsSnapshot = await FirebaseFirestore.instance
+          .collection('user_logs')
+          .where('userId', isEqualTo: user.uid)
+          .get();
+
+      final batch = FirebaseFirestore.instance.batch();
+      for (var doc in logsSnapshot.docs) {
+        batch.delete(doc.reference);
+      }
+      await batch.commit();
+
+      // 2. Authアカウントの削除
+      await user.delete();
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.accountDeletedMessage)));
+      }
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'requires-recent-login') {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (c) => AlertDialog(
+              title: Text(l10n.reauthenticationRequiredTitle),
+              content: Text(l10n.reauthenticationRequiredMessage),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(c),
+                  child: Text(l10n.ok),
+                ),
+              ],
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${e.message}')));
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
+    final isAnonymous = user?.isAnonymous ?? false;
 
     return ListView(
       children: [
@@ -145,7 +223,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
 
-        if (user != null && user.isAnonymous)
+        if (isAnonymous)
           ListTile(
             leading: const Icon(Icons.sync, color: kSengokuGold),
             title: Text(l10n.linkGoogleAccount),
@@ -162,33 +240,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onTap: () => _showLanguageDialog(context),
         ),
         const Divider(),
+
+        // 匿名ユーザー（ゲスト）以外の場合のみ、通常のログアウトを表示
+        if (!isAnonymous)
+          ListTile(
+            leading: const Icon(Icons.logout, color: kIshigakiGrey),
+            title: Text(l10n.logout),
+            onTap: () async {
+              await FirebaseAuth.instance.signOut();
+            },
+          ),
+
+        // アカウント削除は共通（ゲストにとっては実質的なログアウト+データ清掃）
         ListTile(
-          leading: const Icon(Icons.logout, color: Colors.red),
-          title: Text(l10n.logout, style: const TextStyle(color: Colors.red)),
-          onTap: () async {
-            if (user != null && user.isAnonymous) {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (c) => AlertDialog(
-                  title: Text(l10n.logoutWarningTitle),
-                  content: Text(l10n.logoutWarningContent),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(c, false),
-                      child: const Text('Cancel'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(c, true),
-                      child: const Text('Logout'),
-                    ),
-                  ],
-                ),
-              );
-              if (confirm != true) return;
-            }
-            await FirebaseAuth.instance.signOut();
-          },
+          leading: const Icon(Icons.delete_forever, color: Colors.red),
+          title: Text(
+            l10n.deleteAccount,
+            style: const TextStyle(color: Colors.red),
+          ),
+          onTap: _handleDeleteAccount,
         ),
+
+        const SizedBox(height: 48),
+
+        // 寄付者一覧（石垣風）
+        _buildSupportersSection(context),
 
         // ネイティブ広告エリア
         if (_nativeAdIsLoaded)
@@ -239,12 +315,107 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  child: AdWidget(ad: _nativeAd!),
+                  child: AdWidget(
+                    key: const Key('native_ad_settings'),
+                    ad: _nativeAd!,
+                  ),
                 ),
               ],
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildSupportersSection(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('supporters').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final supporterNames = snapshot.data!.docs
+            .map(
+              (doc) => (doc.data() as Map<String, dynamic>)['name'] as String,
+            )
+            .toList();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Row(
+                children: [
+                  Icon(Icons.volunteer_activism, color: kSengokuGold, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Supporters',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: kUrushiBlack,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // 野面積みの石垣風レイアウト（密度を高く、背景なし）
+              Wrap(
+                spacing: 3, // 隙間を最小限に
+                runSpacing: 3,
+                children: supporterNames.asMap().entries.map((entry) {
+                  return _buildIshigakiStone(entry.value, entry.key);
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.supporterIntro,
+                style: const TextStyle(fontSize: 11, color: kIshigakiGrey),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildIshigakiStone(String name, int index) {
+    final random = math.Random(index);
+    // 石の色を個別に設定（一個前よりも少し明るめのグレーからランダムに）
+    final stoneColor = Color.lerp(
+      kIshigakiGrey.withOpacity(0.2),
+      kIshigakiGrey.withOpacity(0.4),
+      random.nextDouble(),
+    );
+
+    // よりいびつな形状
+    final borderRadius = BorderRadius.only(
+      topLeft: Radius.circular(6 + random.nextDouble() * 15),
+      topRight: Radius.circular(6 + random.nextDouble() * 15),
+      bottomLeft: Radius.circular(6 + random.nextDouble() * 15),
+      bottomRight: Radius.circular(6 + random.nextDouble() * 15),
+    );
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: BoxDecoration(
+        color: stoneColor,
+        borderRadius: borderRadius,
+        // 石の輪郭をうっすら出す
+        border: Border.all(color: kIshigakiGrey.withOpacity(0.1), width: 0.5),
+      ),
+      child: Text(
+        name,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+          color: kIshigakiGrey,
+          fontFamily: 'serif',
+        ),
+      ),
     );
   }
 }

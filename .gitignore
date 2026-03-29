@@ -9,8 +9,10 @@ build/
 android/**/generated/
 android/app/google-services.json
 android/local.properties
+android/key.properties
 android/**/*.keystore
 android/**/*.jks
+*.jks
 
 # iOS related
 ios/Flutter/Generated.xcconfig

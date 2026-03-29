@@ -35,12 +35,22 @@ class Spot {
 
   String getName(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    return locale?.languageCode == 'en' ? nameEn : nameJa;
+    final code = locale?.languageCode;
+    // 中国語・韓国語の場合は英語名を返す（データがないため）
+    if (code == 'en' || code == 'zh' || code == 'ko') {
+      return nameEn.isNotEmpty ? nameEn : nameJa;
+    }
+    return nameJa;
   }
 
   String getPrefecture(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    return locale?.languageCode == 'en' ? prefectureEn : prefectureJa;
+    final code = locale?.languageCode;
+    // 中国語・韓国語の場合は英語名を返す（データがないため）
+    if (code == 'en' || code == 'zh' || code == 'ko') {
+      return prefectureEn.isNotEmpty ? prefectureEn : prefectureJa;
+    }
+    return prefectureJa;
   }
 
   String getDisplayName(BuildContext context) {
@@ -100,16 +110,24 @@ class Mission {
   final String id;
   final String titleJa;
   final String titleEn;
+  final String titleZh;
+  final String titleKo;
   final String descriptionJa;
   final String descriptionEn;
+  final String descriptionZh;
+  final String descriptionKo;
   final List<String> targetSpotIds;
 
   Mission({
     required this.id,
     required this.titleJa,
     required this.titleEn,
+    required this.titleZh,
+    required this.titleKo,
     required this.descriptionJa,
     required this.descriptionEn,
+    required this.descriptionZh,
+    required this.descriptionKo,
     required this.targetSpotIds,
   });
 
@@ -119,20 +137,42 @@ class Mission {
       id: doc.id,
       titleJa: data['title_ja'] ?? '',
       titleEn: data['title_en'] ?? '',
+      titleZh: data['title_zh'] ?? '',
+      titleKo: data['title_ko'] ?? '',
       descriptionJa: data['description_ja'] ?? '',
       descriptionEn: data['description_en'] ?? '',
+      descriptionZh: data['description_zh'] ?? '',
+      descriptionKo: data['description_ko'] ?? '',
       targetSpotIds: List<String>.from(data['targetSpotIds'] ?? []),
     );
   }
 
   String getTitle(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    return locale?.languageCode == 'en' ? titleEn : titleJa;
+    switch (locale?.languageCode) {
+      case 'en':
+        return titleEn;
+      case 'zh':
+        return titleZh.isNotEmpty ? titleZh : titleJa;
+      case 'ko':
+        return titleKo.isNotEmpty ? titleKo : titleJa;
+      default:
+        return titleJa;
+    }
   }
 
   String getDescription(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    return locale?.languageCode == 'en' ? descriptionEn : descriptionJa;
+    switch (locale?.languageCode) {
+      case 'en':
+        return descriptionEn;
+      case 'zh':
+        return descriptionZh.isNotEmpty ? descriptionZh : descriptionJa;
+      case 'ko':
+        return descriptionKo.isNotEmpty ? descriptionKo : descriptionJa;
+      default:
+        return descriptionJa;
+    }
   }
 
   int getAchievedCount(List<Visit> userVisits) {

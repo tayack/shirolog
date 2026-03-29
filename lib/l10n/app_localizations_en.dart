@@ -250,4 +250,45 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get missionCompletedShareSuffix => ' has been conquered!\n\n';
+
+  @override
+  String get supporterIntro =>
+      'These are the supporters who have helped develop the app.';
+
+  @override
+  String get existingAccountTitle => 'Existing Account Found';
+
+  @override
+  String get existingAccountMessage =>
+      'This Google account is already linked to another user. Would you like to switch to the existing account?\n(*Current guest data will be lost)';
+
+  @override
+  String get switchToExisting => 'Switch Account';
+
+  @override
+  String get stayAsGuest => 'Stay as Guest';
+
+  @override
+  String get deleteAccount => 'Delete Account';
+
+  @override
+  String get deleteAccountTitle => 'Permanently delete account?';
+
+  @override
+  String get deleteAccountConfirmation =>
+      'This action cannot be undone. All your data, including visit logs, will be permanently deleted.';
+
+  @override
+  String get accountDeletedMessage =>
+      'Account and associated data have been deleted.';
+
+  @override
+  String get reauthenticationRequiredTitle => 'Re-authentication Required';
+
+  @override
+  String get reauthenticationRequiredMessage =>
+      'For security reasons, please log out and sign in again before deleting your account.';
+
+  @override
+  String get ok => 'OK';
 }

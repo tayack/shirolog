@@ -13,6 +13,7 @@ import '../models.dart' as models;
 import '../theme.dart';
 import '../main.dart';
 import '../widgets/wafu_icon.dart';
+import '../ad_helper.dart';
 
 class RecordScreen extends StatefulWidget {
   final String initialCastleName;
@@ -62,10 +63,6 @@ class _RecordScreenState extends State<RecordScreen> {
 
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
-
-  final String _adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
 
   static const List<Map<String, String>> _prefectures = [
     {'id': '01', 'ja': '北海道', 'en': 'Hokkaido'},
@@ -139,7 +136,7 @@ class _RecordScreenState extends State<RecordScreen> {
 
   void _loadAd() {
     _nativeAd = NativeAd(
-      adUnitId: _adUnitId,
+      adUnitId: AdHelper.recordNativeAdUnitId,
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           setState(() {
@@ -351,7 +348,7 @@ class _RecordScreenState extends State<RecordScreen> {
         _existingDocId = visit.id;
         _commentController.text = visit.personalNote ?? '';
         _selectedDate = visit.visitDate;
-        _dateController.text = DateFormat('yyyy/MM/dd').format(visit.visitDate);
+        _dateController.text = DateFormat('yyyy/MM/dd').format(_selectedDate);
         _uploadedImageUrl = visit.photoUrls.isNotEmpty
             ? visit.photoUrls.first
             : null;
@@ -639,7 +636,9 @@ class _RecordScreenState extends State<RecordScreen> {
       (p) => p['id'] == prefId,
       orElse: () => {'ja': '-', 'en': '-'},
     );
-    return Localizations.maybeLocaleOf(context)?.languageCode == 'en'
+    final code = Localizations.maybeLocaleOf(context)?.languageCode;
+    // 中国語・韓国語の場合は英語名を返す
+    return (code == 'en' || code == 'zh' || code == 'ko')
         ? pref['en']!
         : pref['ja']!;
   }
@@ -696,7 +695,9 @@ class _RecordScreenState extends State<RecordScreen> {
   }
 
   Widget _buildContent(AppLocalizations l10n) {
-    final isEn = Localizations.maybeLocaleOf(context)?.languageCode == 'en';
+    final code = Localizations.maybeLocaleOf(context)?.languageCode;
+    // 中国語・韓国語の場合は英語表示にする
+    final showEn = (code == 'en' || code == 'zh' || code == 'ko');
     String screenTitle = (_currentMode == RecordMode.edit
         ? l10n.editRecord
         : l10n.newRecord);
@@ -755,7 +756,7 @@ class _RecordScreenState extends State<RecordScreen> {
                   .map(
                     (p) => DropdownMenuItem(
                       value: p['id'],
-                      child: Text(isEn ? p['en']! : p['ja']!),
+                      child: Text(showEn ? p['en']! : p['ja']!),
                     ),
                   )
                   .toList(),
@@ -914,11 +915,20 @@ class _RecordScreenState extends State<RecordScreen> {
             ),
             if (_currentMode == RecordMode.edit) ...[
               const SizedBox(height: 16),
-              TextButton(
+              ElevatedButton(
                 onPressed: () => setState(() => _currentMode = RecordMode.view),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: kIshigakiGrey,
+                  side: const BorderSide(color: Colors.black12),
+                  minimumSize: const Size(double.infinity, 54),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 child: Text(
                   l10n.cancelEdit,
-                  style: const TextStyle(color: kIshigakiGrey),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -1053,10 +1063,6 @@ class _RecordDetailViewState extends State<_RecordDetailView> {
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
 
-  final String _adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
-
   @override
   void initState() {
     super.initState();
@@ -1066,7 +1072,7 @@ class _RecordDetailViewState extends State<_RecordDetailView> {
 
   void _loadAd() {
     _nativeAd = NativeAd(
-      adUnitId: _adUnitId,
+      adUnitId: AdHelper.recordNativeAdUnitId,
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           setState(() {

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +9,7 @@ import '../models.dart' as models;
 import '../theme.dart';
 import '../main.dart';
 import '../widgets/wafu_icon.dart';
+import '../ad_helper.dart';
 
 class LogSearchScreen extends StatefulWidget {
   const LogSearchScreen({super.key});
@@ -24,7 +24,6 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
   DateTime? _fromDate;
   DateTime? _toDate;
 
-  // 実際にフィルタリングに使用する検索条件のステート
   String _searchPrefId = '';
   String _searchCastleName = '';
   DateTime? _searchFromDate;
@@ -33,15 +32,10 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
   bool _isPanelExpanded = true;
   Timer? _debounce;
 
-  // 城情報のキャッシュ（N+1問題を回避し、高速なリアルタイム検索を実現）
   final Map<String, models.Spot> _spotCache = {};
 
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
-
-  final String _adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
 
   final List<Map<String, String>> _prefectures = [
     {'id': '', 'ja': 'すべて', 'en': 'All'},
@@ -112,7 +106,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
 
   void _loadAd() {
     _nativeAd = NativeAd(
-      adUnitId: _adUnitId,
+      adUnitId: AdHelper.logSearchNativeAdUnitId,
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           setState(() {
@@ -148,7 +142,6 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
     )..load();
   }
 
-  // 入力が変更された際に呼び出される（Debounce処理）
   void _onSearchChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () {
@@ -156,7 +149,6 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
     });
   }
 
-  // 実際の検索条件に反映してUIを更新
   void _applyFilters() {
     if (!mounted) return;
     setState(() {
@@ -171,7 +163,8 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
-    final isEn = Localizations.localeOf(context).languageCode == 'en';
+    final code = Localizations.localeOf(context).languageCode;
+    final showEnglishLabel = code == 'en' || code == 'zh' || code == 'ko';
 
     return Column(
       children: [
@@ -268,7 +261,9 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                           border: const OutlineInputBorder(),
                         ),
                         items: _prefectures.map((pref) {
-                          String label = isEn ? pref['en']! : pref['ja']!;
+                          String label = showEnglishLabel
+                              ? pref['en']!
+                              : pref['ja']!;
                           if (pref['id'] == '') label = l10n.all;
                           return DropdownMenuItem(
                             value: pref['id'],
@@ -277,7 +272,7 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
                         }).toList(),
                         onChanged: (val) {
                           setState(() => _selectedPrefId = val);
-                          _onSearchChanged(); // 即座ではなくDebounceを挟む
+                          _onSearchChanged();
                         },
                       ),
                       const SizedBox(height: 16),
@@ -444,7 +439,6 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
               return FutureBuilder<List<Map<String, dynamic>>>(
                 future: _filterLogs(allDocs, context),
                 builder: (context, filterSnapshot) {
-                  // ローディング表示はキャッシュがある場合はチラつき防止のため最小限にする
                   if (!filterSnapshot.hasData && _spotCache.isEmpty)
                     return const Center(child: CircularProgressIndicator());
 
@@ -603,7 +597,10 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
               ),
             ],
           ),
-          child: AdWidget(ad: _nativeAd!),
+          child: AdWidget(
+            key: const Key('native_ad_log_search'),
+            ad: _nativeAd!,
+          ),
         ),
         const SizedBox(height: 16),
       ],
@@ -620,14 +617,12 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
         doc as DocumentSnapshot<Map<String, dynamic>>,
       );
 
-      // 日付フィルタ（事前チェックでFirestore問い合わせを減らす）
       if (_searchFromDate != null && visit.visitDate.isBefore(_searchFromDate!))
         continue;
       if (_searchToDate != null &&
           visit.visitDate.isAfter(_searchToDate!.add(const Duration(days: 1))))
         continue;
 
-      // 城情報の取得（キャッシュを利用して高速化）
       models.Spot? spot = _spotCache[visit.spotId];
       if (spot == null) {
         final spotDoc = await FirebaseFirestore.instance
@@ -646,10 +641,8 @@ class _LogSearchScreenState extends State<LogSearchScreen> {
 
       if (spot == null) continue;
 
-      // 都道府県フィルタ
       if (_searchPrefId.isNotEmpty && spot.prefId != _searchPrefId) continue;
 
-      // 城名フィルタ
       final title = spot.getName(context);
       if (_searchCastleName.isNotEmpty &&
           !title.toLowerCase().contains(_searchCastleName.toLowerCase()))

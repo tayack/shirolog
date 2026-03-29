@@ -95,7 +95,7 @@ castle-03-0077,鹿島館（鬼柳城）,Kashima Tate (Oniyanagi Castle),岩手�
 castle-03-0078,黒沢尻柵,Kurosawajiri No Ki,岩手県,Iwate,03
 castle-04-0109,中新田城,Nakaniida Castle,宮城県,Miyagi,04
 castle-04-0107,丸森城（丸山城）,Marumori Castle (Maruyama Castle),宮城県,Miyagi,04
-castle-04-0105,鶴頭城,Kakutou Castle,宮城県,Miyagi,04
+castle-04-0105,丸森城（鶴頭城）,Marumori Castle (Tsurugashira Castle),宮城県,Miyagi,04
 castle-04-0124,亘理城,Watari Castle,宮城県,Miyagi,04
 castle-04-0127,今泉城,Imaizumi Castle,宮城県,Miyagi,04
 castle-04-0095,仙台城（青葉城）,Sendai Castle (Aoba Castle),宮城県,Miyagi,04
@@ -129,7 +129,7 @@ castle-04-0113,角田城,Kakuda Castle,宮城県,Miyagi,04
 castle-04-0116,金山城,Kaneyama Castle,宮城県,Miyagi,04
 castle-04-0119,高清水城,Takashimizu Castle,宮城県,Miyagi,04
 castle-04-0108,鶴楯城（下草城）,Tsurutate Castle (Shimogusa Castle),宮城県,Miyagi,04
-castle-05-0144,久保田城（矢留城、葛根城）,Kubota Castle (Akita Castle),秋田県,Akita,05
+castle-05-0144,久ボ田城（秋田城）,Kubota Castle (Akita Castle),秋田県,Akita,05
 castle-05-2056,久保田城,Kubota Castle,秋田県,Akita,05
 castle-05-0147,亀田城,Kameda Castle,秋田県,Akita,05
 castle-05-0142,八乙女城,Yaotome Castle,秋田県,Akita,05
@@ -271,7 +271,6 @@ castle-08-0265,龍ケ崎城,Ryugasaki Castle,茨城県,Ibaraki,08
 castle-09-0307,千本城,Senbon Castle,栃木県,Tochigi,09
 castle-09-2069,唐沢山城,Karazawa-yama Castle,栃木県,Tochigi,09
 castle-09-0271,多気城,Take Castle,栃木県,Tochigi,09
-castle-09-0292,唐沢山城,Karasawayama Castle,栃木県,Tochigi,09
 castle-09-0311,大宮城,Omiya Castle,栃木県,Tochigi,09
 castle-09-0305,大田原城,Otawara Castle,栃木県,Tochigi,09
 castle-09-0269,宇都宮城,Utsunomiya Castle,栃木県,Tochigi,09
@@ -324,7 +323,7 @@ castle-11-0345,杉山城,Sugiyama Castle,埼玉県,Saitama,11
 castle-11-0338,松山城,Matsuyama Castle,埼玉県,Saitama,11
 castle-11-0350,松山陣屋,Matsuyama Jinya,埼玉県,Saitama,11
 castle-11-0341,柏原城,Kashiwabara Castle,埼玉県,Saitama,11
-castle-11-0368,根古屋城（竜谷城、勝楽寺城）,Negoya Castle (Ryukoku Castle),埼玉県,Saitama,11
+castle-11-0368,根古屋城（龍谷城）,Nekoya Castle (Ryukoku Castle),埼玉県,Saitama,11
 castle-11-0351,毛呂城（山根城）,Moro Castle (Yamane Castle),埼玉県,Saitama,11
 castle-11-0356,深谷城,Fukaya Castle,埼玉県,Saitama,11
 castle-11-0366,滝の城,Taki-no-jo Castle,埼玉県,Saitama,11
@@ -343,7 +342,7 @@ castle-11-0342,雉岡城,Kijioka Castle,埼玉県,Saitama,11
 castle-11-0348,難波田城（南畑城）,Nanbata Castle (Minamihata Castle),埼玉県,Saitama,11
 castle-11-0358,青鳥城,Seicho Castle,埼玉県,Saitama,11
 castle-11-0355,領ヶ谷城,Ryogaya Castle,埼玉県,Saitama,11
-castle-11-0362,騎西城（私市城、山根城）,Kisai Castle (Nekoya Castle),埼玉県,Saitama,11
+castle-11-0362,騎西城（根古屋城）,Kisai Castle (Nekoya Castle),埼玉県,Saitama,11
 castle-11-0346,高見城,Takami Castle,埼玉県,Saitama,11
 castle-12-0413,一宮城,Ichinomiya Castle,千葉県,Chiba,12
 castle-12-0384,万喜城,Maki Castle,千葉県,Chiba,12
@@ -388,7 +387,7 @@ castle-12-0402,山中城,Yamanaka Castle,千葉県,Chiba,12
 castle-12-0444,山崎城,Yamazaki Castle,千葉県,Chiba,12
 castle-12-0382,山田城,Yamada Castle,千葉県,Chiba,12
 castle-12-0379,岡本城,Okamoto Castle,千葉県,Chiba,12
-castle-12-0469,布佐城,Fusa Castle (Wada Castle),千葉県,Chiba,12
+castle-12-0469,布佐城（和田城）,Fusa Castle (Wada Castle),千葉県,Chiba,12
 castle-12-0417,引田城,Hikita Castle,千葉県,Chiba,12
 castle-12-0405,成東城,Naruto Castle,千葉県,Chiba,12
 castle-12-0465,我孫子城,Abiko Castle,千葉県,Chiba,12
@@ -413,7 +412,7 @@ castle-12-0416,牛久城,Ushiku Castle,千葉県,Chiba,12
 castle-12-0447,牛尾城,Ushio Castle,千葉県,Chiba,12
 castle-12-0427,生実城,Oyumi Castle,千葉県,Chiba,12
 castle-12-0445,白井城,Shiroi Castle,千葉県,Chiba,12
-castle-12-0389,百首城（造海城）,Hyakushu Castle ,千葉県,Chiba,12
+castle-12-0389,百首城（造海城）,Hyakushu Castle (Tsukurumi Castle),千葉県,Chiba,12
 castle-12-0394,真里谷城,Mariya Castle,千葉県,Chiba,12
 castle-12-0442,矢作城（大崎城）,Yahagi Castle (Osaki Castle),千葉県,Chiba,12
 castle-12-0452,米ケ崎城,Komegazaki Castle,千葉県,Chiba,12
@@ -421,6 +420,7 @@ castle-12-0434,米本城,Yonemoto Castle,千葉県,Chiba,12
 castle-12-0436,臼井城,Usui Castle,千葉県,Chiba,12
 castle-12-0473,芝崎城,Shibasaki Castle,千葉県,Chiba,12
 castle-12-0396,蔵波城,Kurunami Castle,千葉県,Chiba,12
+castle-12-0388,造海城（百首城）,Tsukurumi Castle (Hyakushu Castle),千葉県,Chiba,12
 castle-12-0430,金堀城,Kanehori Castle,千葉県,Chiba,12
 castle-12-0378,金山城,Kanayama Castle,千葉県,Chiba,12
 castle-12-0451,金杉城,Kanasugi Castle,千葉県,Chiba,12
@@ -503,7 +503,7 @@ castle-15-0558,三条城,Sanjo Castle,新潟県,Niigata,15
 castle-15-0555,上条城,Kamijo Castle,新潟県,Niigata,15
 castle-15-0553,下田城,Shitada Castle,新潟県,Niigata,15
 castle-15-0564,与板城 (直江城 / 直江山城),Yoida Castle (Naoe Castle),新潟県,Niigata,15
-castle-15-0565,与板陣屋,Yoida Jinya,新潟県,Niigata,15
+castle-15-0565,与板陣屋 (与板城),Yoida Jinya (Yoida Castle),新潟県,Niigata,15
 castle-15-0561,五十公野城,Ijimino Castle,新潟県,Niigata,15
 castle-15-0540,勝山城（落水城）,Katsuyama Castle (Ochimizu Castle),新潟県,Niigata,15
 castle-15-0536,北条城,Hojo Castle,新潟県,Niigata,15
@@ -583,6 +583,7 @@ castle-16-0626,日方江城,Hikata-e Castle,富山県,Toyama,16
 castle-16-0634,木舟城,Kifune Castle,富山県,Toyama,16
 castle-16-0595,松倉城,Matsukura Castle,富山県,Toyama,16
 castle-16-0618,池田城,Ikeda Castle,富山県,Toyama,16
+castle-16-0614,浅井城,Asai Castle,富山県,Toyama,16
 castle-16-0613,浅井城 (丸山城),Asai Castle (Maruyama Castle),富山県,Toyama,16
 castle-16-0623,湯山城 (森寺城),Yuyama Castle (Moridera Castle),富山県,Toyama,16
 castle-16-0598,源氏ヶ峰城,Genjigamine Castle,富山県,Toyama,16
@@ -659,6 +660,7 @@ castle-18-0698,小浜城,Obama Castle,福井県,Fukui,18
 castle-18-0697,後瀬山城,Nochise-yama Castle,福井県,Fukui,18
 castle-18-0688,敦賀城,Tsuruga Castle,福井県,Fukui,18
 castle-18-0692,杣山城,Somayama Castle,福井県,Fukui,18
+castle-18-2078,玄蕃尾城,Genbao Castle,福井県,Fukui,18
 castle-18-0690,玄蕃尾城 (内中尾山城),Genbao Castle (Uchinakaoyama Castle),福井県,Fukui,18
 castle-18-0689,疋壇城 (塩山城),Hikida Castle (Shioyama Castle),福井県,Fukui,18
 castle-18-0686,福井城 (北ノ庄城),Fukui Castle (Kitanosho Castle),福井県,Fukui,18
@@ -735,7 +737,7 @@ castle-20-0790,片切城 (舟山城),Katagiri Castle (Funayama Castle),長野県
 castle-20-0771,牧之島城,Makinoshima Castle,長野県,Nagano,20
 castle-20-0755,生仁城,Namani Castle,長野県,Nagano,20
 castle-20-0730,田沢城,Tazawa Castle,長野県,Nagano,20
-castle-20-0737,真田本城 ,Sanada Honjo (Matsuo Castle),長野県,Nagano,20
+castle-20-0737,真田本城 (松尾城),Sanada Honjo (Matsuo Castle),長野県,Nagano,20
 castle-20-0800,矢筒城,Yazutsu Castle,長野県,Nagano,20
 castle-20-0796,知久平城,Chikudaira Castle,長野県,Nagano,20
 castle-20-0795,神之峰城,Kannomine Castle,長野県,Nagano,20
@@ -940,7 +942,7 @@ castle-23-1006,北島城,Kitajima Castle,愛知県,Aichi,23
 castle-23-1019,古宮城,Furumiya Castle,愛知県,Aichi,23
 castle-23-0999,古渡城,Furuwatari Castle,愛知県,Aichi,23
 castle-23-1035,吉田城 (今橋城 / 豊橋城),Yoshida Castle (Imahashi Castle / Toyohashi Castle),愛知県,Aichi,23
-castle-23-1004,柏井城,Kashii Castle,愛知県,Aichi,23
+castle-23-1004,吉田城 (柏井城),Yoshida Castle (Kashii Castle),愛知県,Aichi,23
 castle-23-0995,名古屋城 (柳ヶ城 / 金鯱城),Nagoya Castle (Yanagigajo Castle / Kinshojo Castle),愛知県,Aichi,23
 castle-23-1010,大津城,Otsu Castle,愛知県,Aichi,23
 castle-23-0970,大留城,Otome Castle,愛知県,Aichi,23
@@ -1007,7 +1009,7 @@ castle-24-1056,家城城,Ieki Castle,三重県,Mie,24
 castle-24-1042,峯城,Mine Castle,三重県,Mie,24
 castle-24-1046,戸木城,Heki Castle,三重県,Mie,24
 castle-24-1047,松ヶ島城,Matsugashima Castle,三重県,Mie,24
-castle-24-1048,松阪城,Matsusaka Castle,三重県,Mie,24
+castle-24-1048,松坂城,Matsusaka Castle,三重県,Mie,24
 castle-24-1055,枳城,Karachi Castle,三重県,Mie,24
 castle-24-1041,桑名城,Kuwana Castle,三重県,Mie,24
 castle-24-1062,比自山城,Hijiyama Castle,三重県,Mie,24
@@ -1137,7 +1139,7 @@ castle-27-1157,郡山城,Koriyama Castle,大阪府,Osaka,27
 castle-27-1183,野崎城,Nozaki Castle,大阪府,Osaka,27
 castle-27-1147,野田城,Noda Castle,大阪府,Osaka,27
 castle-27-1165,雨山城 (土丸城),Amayama Castle (Tsuchimaru Castle),大阪府,Osaka,27
-castle-27-1172,飯盛山城（飯盛城）,Iimoriyama Castle,大阪府,Osaka,27
+castle-27-1172,飯盛山城,Iimoriyama Castle,大阪府,Osaka,27
 castle-27-1177,高安城,Takayasu Castle,大阪府,Osaka,27
 castle-27-1171,高屋城,Takaya Castle,大阪府,Osaka,27
 castle-27-1145,高槻城,Takatsuki Castle,大阪府,Osaka,27
@@ -1544,7 +1546,7 @@ castle-37-1588,勝賀城,Katsuga Castle,香川県,Kagawa,37
 castle-37-1598,十河城,Sogo Castle,香川県,Kagawa,37
 castle-37-1603,城山城,Shiroyama Castle,香川県,Kagawa,37
 castle-37-1586,天霧城 (雨霧城),Amagiri Castle (Amagiri Castle),香川県,Kagawa,37
-castle-37-1597,屋嶋城（屋島城）,Yashimano-ki Castle,香川県,Kagawa,37
+castle-37-1597,屋嶋城,Yashimano-ki Castle,香川県,Kagawa,37
 castle-37-1587,引田城,Hiketa Castle,香川県,Kagawa,37
 castle-37-1596,星ヶ城,Hoshigajo Castle,香川県,Kagawa,37
 castle-37-1600,昼寝城,Hirune Castle,香川県,Kagawa,37
@@ -1646,7 +1648,7 @@ castle-40-1715,岳山城,Takeyama Castle,福岡県,Fukuoka,40
 castle-40-1706,怡土城 (高祖城),Ito Castle (Kosojo),福岡県,Fukuoka,40
 castle-40-1693,旭城,Asahi Castle,福岡県,Fukuoka,40
 castle-40-1694,有智山城,Uchiyama Castle,福岡県,Fukuoka,40
-castle-40-1698,柳川城,Yanagawa Castle,福岡県,Fukuoka,40
+castle-40-1698,柳川城 (舞鶴城),Yanagawa Castle (Maizurujo),福岡県,Fukuoka,40
 castle-40-1687,柳瀬城,Yanase Castle,福岡県,Fukuoka,40
 castle-40-1699,榎津城,Enokizu Castle,福岡県,Fukuoka,40
 castle-40-1676,水城,Mizuki Castle,福岡県,Fukuoka,40
@@ -1752,7 +1754,7 @@ castle-42-1758,鶴亀城,Tsurukame Castle,長崎県,Nagasaki,42
 castle-42-1788,鶴翔城,Kakushojo Castle,長崎県,Nagasaki,42
 castle-43-1809,人吉城,Hitoyoshi Castle,熊本県,Kumamoto,43
 castle-43-1805,佐敷城,Sashiki Castle,熊本県,Kumamoto,43
-castle-43-1812,八代城 ,Yatsushiro Castle,熊本県,Kumamoto,43
+castle-43-1812,八代城 (松江城),Yatsushiro Castle (Matsue Castle),熊本県,Kumamoto,43
 castle-43-1798,千葉城,Chiba Castle,熊本県,Kumamoto,43
 castle-43-1817,南関城,Nankan Castle,熊本県,Kumamoto,43
 castle-43-1810,古麓城 (八代城 / 飯盛城 / 鷹峯城),Fumoto Castle (Yatsushiro Castle / Iimorijo / Takaminejo),熊本県,Kumamoto,43
@@ -1773,7 +1775,7 @@ castle-43-1803,菊池城,Kikuchi Castle,熊本県,Kumamoto,43
 castle-43-1804,鍋城,Nabe Castle,熊本県,Kumamoto,43
 castle-43-1797,隈本城,Kumamoto Castle,熊本県,Kumamoto,43
 castle-43-1802,鞠智城,Kikuchi Castle,熊本県,Kumamoto,43
-castle-43-1811,麦島城 ,Mugishima Castle,熊本県,Kumamoto,43
+castle-43-1811,麦島城 (八代城),Mugishima Castle (Yatsushiro Castle),熊本県,Kumamoto,43
 castle-44-1820,中津城 (扇城),Nakatsu Castle (Oginojo),大分県,Oita,44
 castle-44-1835,佐伯城,Saiki Castle,大分県,Oita,44
 castle-44-1824,光岡城,Mitsuoka Castle,大分県,Oita,44
@@ -1814,7 +1816,7 @@ castle-45-1878,大河平城,Okabira Castle,宮崎県,Miyazaki,45
 castle-45-1862,天ヶ城,Amagajo Castle,宮崎県,Miyazaki,45
 castle-45-1888,安永城,Yasunaga Castle,宮崎県,Miyazaki,45
 castle-45-1845,宮崎城,Miyazaki Castle,宮崎県,Miyazaki,45
-castle-45-1880,小林城 ,Kobayashi Castle,宮崎県,Miyazaki,45
+castle-45-1880,小林城 (三ツ山城),Kobayashi Castle (Mitsuyamajo),宮崎県,Miyazaki,45
 castle-45-1863,山田城,Yamada Castle,宮崎県,Miyazaki,45
 castle-45-1883,岩牟礼城 (岩瀬城),Iwamure Castle (Iwasejo),宮崎県,Miyazaki,45
 castle-45-1847,延岡城 (縣城),Nobeoka Castle (Agata Castle),宮崎県,Miyazaki,45
@@ -1823,7 +1825,7 @@ castle-45-1890,志和池城,Shiwaichi Castle,宮崎県,Miyazaki,45
 castle-45-1870,戸崎城,Tozaki Castle,宮崎県,Miyazaki,45
 castle-45-1860,新納石城,Niino-ishi Castle,宮崎県,Miyazaki,45
 castle-45-1861,曽井城,Soi Castle,宮崎県,Miyazaki,45
-castle-45-1855,月山日和城 ,Gassan Hiyori Castle,宮崎県,Miyazaki,45
+castle-45-1855,月山日和城 (高城),Gassan Hiyori Castle (Taka Castle),宮崎県,Miyazaki,45
 castle-45-1849,松尾城,Matsuo Castle,宮崎県,Miyazaki,45
 castle-45-1877,桶平城,Okehira Castle,宮崎県,Miyazaki,45
 castle-45-1891,梅北城,Umekita Castle,宮崎県,Miyazaki,45
@@ -1833,7 +1835,7 @@ castle-45-1867,櫛間城,Kushima Castle,宮崎県,Miyazaki,45
 castle-45-1852,浦城城,Urashiro Castle,宮崎県,Miyazaki,45
 castle-45-1857,清武城,Kiyotake Castle,宮崎県,Miyazaki,45
 castle-45-1846,石塚城,Ishizuka Castle,宮崎県,Miyazaki,45
-castle-45-1856,穆佐城,Mukasa Castle,宮崎県,Miyazaki,45
+castle-45-1856,穆佐城 (高城),Mukasa Castle (Taka Castle),宮崎県,Miyazaki,45
 castle-45-1869,紙屋城,Kamiya Castle,宮崎県,Miyazaki,45
 castle-45-1853,綾城,Aya Castle,宮崎県,Miyazaki,45
 castle-45-1850,西階城,Nishishina Castle,宮崎県,Miyazaki,45
@@ -1874,6 +1876,7 @@ castle-46-1912,松尾城 (川辺郡),Matsuo Castle (Kawanabe),鹿児島県,Kagos
 castle-46-1927,松山城,Matsuyama Castle,鹿児島県,Kagoshima,46
 castle-46-1922,横川城,Yokogawa Castle,鹿児島県,Kagoshima,46
 castle-46-1894,清水城,Shimizu Castle,鹿児島県,Kagoshima,46
+castle-46-1917,清水城 (舞鶴城),Shimizu Castle (Maizurujo),鹿児島県,Kagoshima,46
 castle-46-1903,清色城,Kiyoshiki Castle,鹿児島県,Kagoshima,46
 castle-46-1909,知覧城,Chiran Castle,鹿児島県,Kagoshima,46
 castle-46-1920,蒲生城,Kamo Castle,鹿児島県,Kagoshima,46

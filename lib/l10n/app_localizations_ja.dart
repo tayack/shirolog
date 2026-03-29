@@ -248,4 +248,43 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get missionCompletedShareSuffix => ' を制覇しました！\n\n';
+
+  @override
+  String get supporterIntro => '※アプリの開発を支援していただいた皆様です';
+
+  @override
+  String get existingAccountTitle => '既存アカウントが見つかりました';
+
+  @override
+  String get existingAccountMessage =>
+      'このGoogleアカウントはすでに他のデータと紐付いています。既存のアカウントに切り替えますか？\n（※現在ゲストとして登録しているデータは失われます）';
+
+  @override
+  String get switchToExisting => '切り替える';
+
+  @override
+  String get stayAsGuest => '今のまま（ゲスト）';
+
+  @override
+  String get deleteAccount => 'アカウントの削除';
+
+  @override
+  String get deleteAccountTitle => 'アカウントを完全に削除しますか？';
+
+  @override
+  String get deleteAccountConfirmation =>
+      'この操作は取り消せません。登城記録などのすべてのデータが完全に削除されます。';
+
+  @override
+  String get accountDeletedMessage => 'アカウントと関連データを削除しました。';
+
+  @override
+  String get reauthenticationRequiredTitle => '再認証が必要です';
+
+  @override
+  String get reauthenticationRequiredMessage =>
+      '重要な操作のため、一度ログアウトして再度サインインしてから実行してください。';
+
+  @override
+  String get ok => 'OK';
 }

@@ -84,5 +84,17 @@
   "missionCompletedMessage": "を達成しました！",
   "bravo": "あっぱれ！",
   "missionAccomplishedSharePrefix": "【ミッション達成！】\n",
-  "missionCompletedShareSuffix": " を制覇しました！\n\n"
+  "missionCompletedShareSuffix": " を制覇しました！\n\n",
+  "supporterIntro": "※アプリの開発を支援していただいた皆様です",
+  "existingAccountTitle": "既存アカウントが見つかりました",
+  "existingAccountMessage": "このGoogleアカウントはすでに他のデータと紐付いています。既存のアカウントに切り替えますか？\n（※現在ゲストとして登録しているデータは失われます）",
+  "switchToExisting": "切り替える",
+  "stayAsGuest": "今のまま（ゲスト）",
+  "deleteAccount": "アカウントの削除",
+  "deleteAccountTitle": "アカウントを完全に削除しますか？",
+  "deleteAccountConfirmation": "この操作は取り消せません。登城記録などのすべてのデータが完全に削除されます。",
+  "accountDeletedMessage": "アカウントと関連データを削除しました。",
+  "reauthenticationRequiredTitle": "再認証が必要です",
+  "reauthenticationRequiredMessage": "重要な操作のため、一度ログアウトして再度サインインしてから実行してください。",
+  "ok": "OK"
 }

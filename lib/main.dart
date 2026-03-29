@@ -110,7 +110,9 @@ class AuthGate extends StatelessWidget {
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
+
   Future<void> _handleGoogleSignIn(BuildContext context) async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
@@ -121,8 +123,41 @@ class LoginScreen extends StatelessWidget {
         idToken: googleAuth.idToken,
       );
       final user = FirebaseAuth.instance.currentUser;
+
       if (user != null && user.isAnonymous) {
-        await user.linkWithCredential(credential);
+        try {
+          await user.linkWithCredential(credential);
+        } on FirebaseAuthException catch (e) {
+          if (e.code == 'credential-already-in-use' ||
+              e.code == 'email-already-in-use') {
+            if (context.mounted) {
+              final confirm = await showDialog<bool>(
+                context: context,
+                barrierDismissible: false,
+                builder: (c) => AlertDialog(
+                  title: Text(l10n.existingAccountTitle),
+                  content: Text(l10n.existingAccountMessage),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(c, false),
+                      child: Text(l10n.stayAsGuest),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(c, true),
+                      child: Text(l10n.switchToExisting),
+                    ),
+                  ],
+                ),
+              );
+              if (confirm == true) {
+                await FirebaseAuth.instance.signOut();
+                await FirebaseAuth.instance.signInWithCredential(credential);
+              }
+            }
+          } else {
+            rethrow;
+          }
+        }
       } else {
         await FirebaseAuth.instance.signInWithCredential(credential);
       }
@@ -143,7 +178,9 @@ class LoginScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final locale = Localizations.localeOf(context);
     final isJa = locale.languageCode == 'ja';
-    final splitIdx = isJa ? 1 : 5;
+    // 文字列の長さに合わせて安全に分割インデックスを決定
+    final splitIdx = isJa ? 1 : (l10n.loginTitle.length > 5 ? 5 : 0);
+
     return Scaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -161,7 +198,9 @@ class LoginScreen extends StatelessWidget {
                 text: TextSpan(
                   children: [
                     TextSpan(
-                      text: l10n.loginTitle.substring(0, splitIdx),
+                      text: l10n.loginTitle.length >= splitIdx
+                          ? l10n.loginTitle.substring(0, splitIdx)
+                          : l10n.loginTitle,
                       style: const TextStyle(
                         color: kUrushiBlack,
                         fontSize: 48,
@@ -169,15 +208,16 @@ class LoginScreen extends StatelessWidget {
                         letterSpacing: 4,
                       ),
                     ),
-                    TextSpan(
-                      text: l10n.loginTitle.substring(splitIdx),
-                      style: const TextStyle(
-                        color: kSengokuGold,
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 4,
+                    if (l10n.loginTitle.length > splitIdx)
+                      TextSpan(
+                        text: l10n.loginTitle.substring(splitIdx),
+                        style: const TextStyle(
+                          color: kSengokuGold,
+                          fontSize: 48,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 4,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ),
@@ -299,6 +339,7 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   Future<void> handleLink() async {
+    final l10n = AppLocalizations.of(context)!;
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
       if (googleUser == null) return;
@@ -308,11 +349,68 @@ class MainNavigationScreenState extends State<MainNavigationScreen> {
         accessToken: googleAuth.accessToken,
         idToken: googleAuth.idToken,
       );
-      await FirebaseAuth.instance.currentUser?.linkWithCredential(credential);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.linkSuccess)),
-        );
+
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      try {
+        await user.linkWithCredential(credential);
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.linkSuccess)));
+        }
+      } on FirebaseAuthException catch (e) {
+        if (e.code == 'credential-already-in-use' ||
+            e.code == 'email-already-in-use') {
+          // すでにアカウントが存在する場合
+          if (mounted) {
+            final confirm = await showDialog<bool>(
+              context: context,
+              barrierDismissible: false,
+              builder: (c) => AlertDialog(
+                title: Text(l10n.existingAccountTitle),
+                content: Text(l10n.existingAccountMessage),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(c, false),
+                    child: Text(l10n.stayAsGuest),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(c, true),
+                    child: Text(l10n.switchToExisting),
+                  ),
+                ],
+              ),
+            );
+
+            if (confirm == true) {
+              try {
+                // 既存アカウントへの切り替えを確実にするため、一旦ログアウトしてからサインインする
+                await FirebaseAuth.instance.signOut();
+                await FirebaseAuth.instance.signInWithCredential(credential);
+                if (mounted) {
+                  // 切り替え後はホーム画面へ戻す
+                  setState(() {
+                    _selectedIndex = 0;
+                  });
+                }
+              } catch (signInError) {
+                debugPrint('Switch Error: $signInError');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error: $signInError'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            }
+          }
+        } else {
+          rethrow;
+        }
       }
     } catch (e) {
       if (mounted) {

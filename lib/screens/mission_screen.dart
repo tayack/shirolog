@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../models.dart' as models;
 import '../theme.dart';
 import '../widgets/wafu_icon.dart';
+import '../ad_helper.dart';
 
 class MissionScreen extends StatefulWidget {
   const MissionScreen({super.key});
@@ -28,10 +28,6 @@ class _MissionScreenState extends State<MissionScreen> {
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
 
-  final String _adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
-
   @override
   void initState() {
     super.initState();
@@ -47,7 +43,7 @@ class _MissionScreenState extends State<MissionScreen> {
 
   void _loadAd() {
     _nativeAd = NativeAd(
-      adUnitId: _adUnitId,
+      adUnitId: AdHelper.missionNativeAdUnitId,
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           setState(() {

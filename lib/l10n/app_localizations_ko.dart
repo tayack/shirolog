@@ -249,4 +249,43 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get missionCompletedShareSuffix => '을(를) 제패했습니다!\n\n';
+
+  @override
+  String get supporterIntro => '앱 개발을 지원해주신 분들입니다.';
+
+  @override
+  String get existingAccountTitle => '기존 계정 발견';
+
+  @override
+  String get existingAccountMessage =>
+      '이 Google 계정은 이미 다른 데이터와 연결되어 있습니다. 기존 계정으로 전환하시겠습니까?\n(※현재 게스트로 등록된 데이터는 삭제됩니다)';
+
+  @override
+  String get switchToExisting => '계정 전환';
+
+  @override
+  String get stayAsGuest => '현재 상태 유지(게스트)';
+
+  @override
+  String get deleteAccount => '계정 삭제';
+
+  @override
+  String get deleteAccountTitle => '계정을 완전히 삭제하시겠습니까?';
+
+  @override
+  String get deleteAccountConfirmation =>
+      '이 작업은 되돌릴 수 없습니다. 공성 기록을 포함한 모든 데이터가 영구적으로 삭제됩니다.';
+
+  @override
+  String get accountDeletedMessage => '계정 및 관련 데이터가 삭제되었습니다.';
+
+  @override
+  String get reauthenticationRequiredTitle => '재인증 필요';
+
+  @override
+  String get reauthenticationRequiredMessage =>
+      '보안을 위해 계정 삭제 전 로그아웃 후 다시 로그인해 주세요.';
+
+  @override
+  String get ok => '확인';
 }

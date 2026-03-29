@@ -84,5 +84,17 @@
   "missionCompletedMessage": " accomplished!",
   "bravo": "Bravo!",
   "missionAccomplishedSharePrefix": "【Mission Accomplished!】\n",
-  "missionCompletedShareSuffix": " has been conquered!\n\n"
+  "missionCompletedShareSuffix": " has been conquered!\n\n",
+  "supporterIntro": "These are the supporters who have helped develop the app.",
+  "existingAccountTitle": "Existing Account Found",
+  "existingAccountMessage": "This Google account is already linked to another user. Would you like to switch to the existing account?\n(*Current guest data will be lost)",
+  "switchToExisting": "Switch Account",
+  "stayAsGuest": "Stay as Guest",
+  "deleteAccount": "Delete Account",
+  "deleteAccountTitle": "Permanently delete account?",
+  "deleteAccountConfirmation": "This action cannot be undone. All your data, including visit logs, will be permanently deleted.",
+  "accountDeletedMessage": "Account and associated data have been deleted.",
+  "reauthenticationRequiredTitle": "Re-authentication Required",
+  "reauthenticationRequiredMessage": "For security reasons, please log out and sign in again before deleting your account.",
+  "ok": "OK"
 }

@@ -247,4 +247,41 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get missionCompletedShareSuffix => ' 已完成！\n\n';
+
+  @override
+  String get supporterIntro => '这些是支持应用开发的赞助者们。';
+
+  @override
+  String get existingAccountTitle => '发现现有账号';
+
+  @override
+  String get existingAccountMessage =>
+      '此 Google 账号已与其他数据关联。是否切换到现有账号？\n（※当前以访客身份注册的数据将会丢失）';
+
+  @override
+  String get switchToExisting => '切换账号';
+
+  @override
+  String get stayAsGuest => '保持当前状态（访客）';
+
+  @override
+  String get deleteAccount => '删除账号';
+
+  @override
+  String get deleteAccountTitle => '确定要删除账号吗？';
+
+  @override
+  String get deleteAccountConfirmation => '此操作无法撤销。您的所有数据（包括登城记录）将被永久删除。';
+
+  @override
+  String get accountDeletedMessage => '账号及相关数据已删除。';
+
+  @override
+  String get reauthenticationRequiredTitle => '需要重新验证';
+
+  @override
+  String get reauthenticationRequiredMessage => '出于安全原因，请在删除账号前先退出并重新登录。';
+
+  @override
+  String get ok => '确定';
 }

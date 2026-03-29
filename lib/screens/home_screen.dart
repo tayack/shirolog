@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -10,6 +9,7 @@ import '../models.dart' as models;
 import '../theme.dart';
 import '../main.dart';
 import '../widgets/wafu_icon.dart';
+import '../ad_helper.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -21,11 +21,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   NativeAd? _nativeAd;
   bool _nativeAdIsLoaded = false;
-
-  // テスト用ネイティブ広告ユニットID
-  final String _adUnitId = Platform.isAndroid
-      ? 'ca-app-pub-3940256099942544/2247696110'
-      : 'ca-app-pub-3940256099942544/3986624511';
 
   @override
   void initState() {
@@ -41,7 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadAd() {
     _nativeAd = NativeAd(
-      adUnitId: _adUnitId,
+      adUnitId: AdHelper.homeNativeAdUnitId,
       listener: NativeAdListener(
         onAdLoaded: (ad) {
           debugPrint('$NativeAd loaded.');
@@ -55,7 +50,6 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       request: const AdRequest(),
-      // 既存のUIに馴染ませるためのスタイリング
       nativeTemplateStyle: NativeTemplateStyle(
         templateType: TemplateType.small,
         mainBackgroundColor: Colors.white,
@@ -209,7 +203,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 登城数表示エリア
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
@@ -309,7 +302,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 16),
 
-              // 開発支援ボタン
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
@@ -339,7 +331,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(height: 32),
 
-              // 最新の訪問履歴タイトル
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -372,10 +363,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(40),
                     child: Column(
                       children: [
-                        Icon(
-                          Icons.fort_outlined,
-                          size: 64,
-                          color: Colors.grey[300],
+                        const WafuIcon(
+                          assetName: 'home',
+                          fallbackType: WafuIconType.tenshu,
+                          color: Colors.black12,
+                          size: 100,
                         ),
                         const SizedBox(height: 16),
                         Text(
@@ -397,7 +389,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   return _buildRecentLogCard(context, visit, allSpotIds, index);
                 }).toList(),
 
-              // ネイティブ広告エリア
               if (_nativeAdIsLoaded)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +429,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 12),
                     Container(
-                      height: 130, // Validator対策で120から130に微増
+                      height: 130,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(12),
@@ -450,7 +441,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ],
                       ),
-                      child: AdWidget(ad: _nativeAd!),
+                      child: AdWidget(
+                        key: const Key('native_ad_home'),
+                        ad: _nativeAd!,
+                      ),
                     ),
                   ],
                 ),

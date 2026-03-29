@@ -575,6 +575,78 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **' has been conquered!\n\n'**
   String get missionCompletedShareSuffix;
+
+  /// No description provided for @supporterIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'These are the supporters who have helped develop the app.'**
+  String get supporterIntro;
+
+  /// No description provided for @existingAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing Account Found'**
+  String get existingAccountTitle;
+
+  /// No description provided for @existingAccountMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This Google account is already linked to another user. Would you like to switch to the existing account?\n(*Current guest data will be lost)'**
+  String get existingAccountMessage;
+
+  /// No description provided for @switchToExisting.
+  ///
+  /// In en, this message translates to:
+  /// **'Switch Account'**
+  String get switchToExisting;
+
+  /// No description provided for @stayAsGuest.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay as Guest'**
+  String get stayAsGuest;
+
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently delete account?'**
+  String get deleteAccountTitle;
+
+  /// No description provided for @deleteAccountConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'This action cannot be undone. All your data, including visit logs, will be permanently deleted.'**
+  String get deleteAccountConfirmation;
+
+  /// No description provided for @accountDeletedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Account and associated data have been deleted.'**
+  String get accountDeletedMessage;
+
+  /// No description provided for @reauthenticationRequiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-authentication Required'**
+  String get reauthenticationRequiredTitle;
+
+  /// No description provided for @reauthenticationRequiredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'For security reasons, please log out and sign in again before deleting your account.'**
+  String get reauthenticationRequiredMessage;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
 }
 
 class _AppLocalizationsDelegate
