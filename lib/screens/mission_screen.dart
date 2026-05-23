@@ -99,9 +99,20 @@ class _MissionScreenState extends State<MissionScreen> {
     });
   }
 
+  int _missionSortOrder(String id) {
+    final number = id.replaceFirst('m-', '');
+    return int.tryParse(number) ?? 0;
+  }
+
+  int _missionSortValue(models.Mission mission) {
+    return mission.sortOrder > 0
+        ? mission.sortOrder
+        : _missionSortOrder(mission.id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dynamic l10n = AppLocalizations.of(context)!;
+    final l10n = AppLocalizations.of(context)!;
     final user = FirebaseAuth.instance.currentUser;
 
     return StreamBuilder<QuerySnapshot>(
@@ -134,7 +145,8 @@ class _MissionScreenState extends State<MissionScreen> {
                     d as DocumentSnapshot<Map<String, dynamic>>,
                   ),
                 )
-                .toList();
+                .toList()
+              ..sort((a, b) => _missionSortValue(a).compareTo(_missionSortValue(b)));
 
             final favoriteMissions = <models.Mission>[];
             final completedMissions = <models.Mission>[];
@@ -160,26 +172,30 @@ class _MissionScreenState extends State<MissionScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 _buildExpandableSection(
+                  context,
                   'favorites',
-                  _getTranslation(l10n, 'favoriteMissions', 'お気に入り'),
+                  l10n.favoriteMissions,
                   favoriteMissions,
                   visits,
                 ),
                 _buildExpandableSection(
+                  context,
                   'inProgress',
-                  _getTranslation(l10n, 'inProgressMissions', '挑戦中'),
+                  l10n.inProgressMissions,
                   inProgressMissions,
                   visits,
                 ),
                 _buildExpandableSection(
+                  context,
                   'unstarted',
-                  _getTranslation(l10n, 'unstartedMissions', '未挑戦'),
+                  l10n.unstartedMissions,
                   unstartedMissions,
                   visits,
                 ),
                 _buildExpandableSection(
+                  context,
                   'completed',
-                  _getTranslation(l10n, 'completedMissions', '達成済み'),
+                  l10n.completedMissions,
                   completedMissions,
                   visits,
                 ),
@@ -213,9 +229,9 @@ class _MissionScreenState extends State<MissionScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'おすすめコンテンツ',
-                            style: TextStyle(
+                          Text(
+                            l10n.recommendedContent,
+                            style: const TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                               color: kIshigakiGrey,
@@ -251,6 +267,7 @@ class _MissionScreenState extends State<MissionScreen> {
   }
 
   Widget _buildExpandableSection(
+    BuildContext context,
     String key,
     String title,
     List<models.Mission> missions,
@@ -289,25 +306,6 @@ class _MissionScreenState extends State<MissionScreen> {
         const SizedBox(height: 12),
       ],
     );
-  }
-
-  String _getTranslation(dynamic l10n, String key, String fallback) {
-    try {
-      switch (key) {
-        case 'favoriteMissions':
-          return l10n.favoriteMissions;
-        case 'inProgressMissions':
-          return l10n.inProgressMissions;
-        case 'unstartedMissions':
-          return l10n.unstartedMissions;
-        case 'completedMissions':
-          return l10n.completedMissions;
-        default:
-          return fallback;
-      }
-    } catch (_) {
-      return fallback;
-    }
   }
 
   Widget _buildMissionCard(

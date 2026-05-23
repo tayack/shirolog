@@ -117,6 +117,7 @@ class Mission {
   final String descriptionZh;
   final String descriptionKo;
   final List<String> targetSpotIds;
+  final int sortOrder;
 
   Mission({
     required this.id,
@@ -129,6 +130,7 @@ class Mission {
     required this.descriptionZh,
     required this.descriptionKo,
     required this.targetSpotIds,
+    required this.sortOrder,
   });
 
   factory Mission.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
@@ -144,18 +146,24 @@ class Mission {
       descriptionZh: data['description_zh'] ?? '',
       descriptionKo: data['description_ko'] ?? '',
       targetSpotIds: List<String>.from(data['targetSpotIds'] ?? []),
+      sortOrder: data['sort_order'] is int
+          ? data['sort_order'] as int
+          : int.tryParse(data['sort_order']?.toString() ?? '') ?? 0,
     );
   }
 
   String getTitle(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    switch (locale?.languageCode) {
+    final code = locale?.languageCode;
+    switch (code) {
       case 'en':
-        return titleEn;
+        return titleEn.isNotEmpty ? titleEn : titleJa;
       case 'zh':
-        return titleZh.isNotEmpty ? titleZh : titleJa;
+        if (titleZh.isNotEmpty) return titleZh;
+        return titleEn.isNotEmpty ? titleEn : titleJa;
       case 'ko':
-        return titleKo.isNotEmpty ? titleKo : titleJa;
+        if (titleKo.isNotEmpty) return titleKo;
+        return titleEn.isNotEmpty ? titleEn : titleJa;
       default:
         return titleJa;
     }
@@ -163,13 +171,16 @@ class Mission {
 
   String getDescription(BuildContext context) {
     final locale = Localizations.maybeLocaleOf(context);
-    switch (locale?.languageCode) {
+    final code = locale?.languageCode;
+    switch (code) {
       case 'en':
-        return descriptionEn;
+        return descriptionEn.isNotEmpty ? descriptionEn : descriptionJa;
       case 'zh':
-        return descriptionZh.isNotEmpty ? descriptionZh : descriptionJa;
+        if (descriptionZh.isNotEmpty) return descriptionZh;
+        return descriptionEn.isNotEmpty ? descriptionEn : descriptionJa;
       case 'ko':
-        return descriptionKo.isNotEmpty ? descriptionKo : descriptionJa;
+        if (descriptionKo.isNotEmpty) return descriptionKo;
+        return descriptionEn.isNotEmpty ? descriptionEn : descriptionJa;
       default:
         return descriptionJa;
     }

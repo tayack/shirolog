@@ -15,6 +15,17 @@ import '../main.dart';
 import '../widgets/wafu_icon.dart';
 import '../ad_helper.dart';
 
+int _missionSortOrder(String id) {
+  final number = id.replaceFirst('m-', '');
+  return int.tryParse(number) ?? 0;
+}
+
+int _missionSortValue(models.Mission mission) {
+  return mission.sortOrder > 0
+      ? mission.sortOrder
+      : _missionSortOrder(mission.id);
+}
+
 class RecordScreen extends StatefulWidget {
   final String initialCastleName;
   final String? initialSpotId;
@@ -366,6 +377,8 @@ class _RecordScreenState extends State<RecordScreen> {
     final pickedFile = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 70,
+      maxWidth: 1024,
+      maxHeight: 1024,
     );
     if (pickedFile != null) setState(() => _imageFile = File(pickedFile.path));
   }
@@ -569,28 +582,49 @@ class _RecordScreenState extends State<RecordScreen> {
     String spotId,
   ) async {
     final userId = FirebaseAuth.instance.currentUser?.uid ?? 'guest';
-    final mSnapshot = await FirebaseFirestore.instance
-        .collection('master_missions')
-        .get();
+    final results = await Future.wait([
+      FirebaseFirestore.instance
+          .collection('master_missions')
+          .where('targetSpotIds', arrayContains: spotId)
+          .get(),
+      FirebaseFirestore.instance
+          .collection('user_logs')
+          .where('userId', isEqualTo: userId)
+          .get(),
+    ]);
+
+    final mSnapshot = results[0] as QuerySnapshot;
+    final lSnapshot = results[1] as QuerySnapshot;
+
+    if (mSnapshot.docs.isEmpty) return [];
+
     final missions = mSnapshot.docs
-        .map((d) => models.Mission.fromFirestore(d))
-        .toList();
-    final lSnapshot = await FirebaseFirestore.instance
-        .collection('user_logs')
-        .where('userId', isEqualTo: userId)
-        .get();
-    final visits = lSnapshot.docs
-        .map((d) => models.Visit.fromFirestore(d))
-        .toList();
+        .map(
+          (d) => models.Mission.fromFirestore(
+            d as DocumentSnapshot<Map<String, dynamic>>,
+          ),
+        )
+        .toList()
+      ..sort((a, b) => _missionSortValue(a).compareTo(_missionSortValue(b)));
+
+    final visitedSpotIds = lSnapshot.docs
+        .map((doc) => (doc.data() as Map<String, dynamic>)['spotId'] as String)
+        .toSet();
+
     List<models.Mission> newlyCompleted = [];
     for (var m in missions) {
-      if (!m.targetSpotIds.contains(spotId)) continue;
-      final visitsWithoutCurrent = visits
-          .where((v) => v.spotId != spotId)
-          .toList();
-      if (m.getAchievedCount(visitsWithoutCurrent) != m.targetSpotIds.length &&
-          m.getAchievedCount(visits) == m.targetSpotIds.length)
+      final countWithoutCurrent = m.targetSpotIds
+          .where((id) => id != spotId && visitedSpotIds.contains(id))
+          .length;
+
+      final countWithCurrent = m.targetSpotIds
+          .where((id) => visitedSpotIds.contains(id))
+          .length;
+
+      if (countWithoutCurrent != m.targetSpotIds.length &&
+          countWithCurrent == m.targetSpotIds.length) {
         newlyCompleted.add(m);
+      }
     }
     return newlyCompleted;
   }
@@ -661,6 +695,8 @@ class _RecordScreenState extends State<RecordScreen> {
             });
           },
           itemBuilder: (context, index) {
+            if (index >= widget.swipeSpotIds!.length)
+              return const SizedBox.shrink();
             final spotId = widget.swipeSpotIds![index];
             return _RecordDetailView(
               key: ValueKey('detail_$spotId'),
@@ -1131,7 +1167,6 @@ class _RecordDetailViewState extends State<_RecordDetailView> {
       if (_RecordScreenState._visitCache.containsKey(fixedDocId)) {
         visit = _RecordScreenState._visitCache[fixedDocId];
       } else {
-        // 1. 固定IDで試行
         var doc = await FirebaseFirestore.instance
             .collection('user_logs')
             .doc(fixedDocId)
@@ -1142,7 +1177,6 @@ class _RecordDetailViewState extends State<_RecordDetailView> {
             doc as DocumentSnapshot<Map<String, dynamic>>,
           );
         } else {
-          // 2. ランダムID（古いデータ）でのフォールバック試行
           final snapshot = await FirebaseFirestore.instance
               .collection('user_logs')
               .where('userId', isEqualTo: userId)

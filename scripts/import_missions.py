@@ -45,28 +45,36 @@ def import_missions(db, csv_path):
         print(f"エラー: {csv_path} が見つかりません。")
         return
 
-    # 標準の読み込み設定
-    df = pd.read_csv(csv_path, encoding='utf-8')
+    # pandasで読み込み、欠損値を空文字に置き換える
+    df = pd.read_csv(csv_path, encoding='utf-8').fillna('')
     print(f"'{csv_path}' から {len(df)} 件のミッションデータをインポート中...")
 
     batch = db.batch()
+
+    def clean_val(val):
+        v = str(val).strip()
+        return "" if v.lower() == 'nan' else v
+
     for _, row in df.iterrows():
         doc_ref = db.collection('master_missions').document(str(row['m_id']))
 
         # カンマ区切りの文字列をリストに変換
         target_ids = [s.strip() for s in str(row['target_ids']).split(',') if s.strip()]
 
+        sort_order = int(row['sort_order']) if 'sort_order' in df.columns and pd.notna(row['sort_order']) else 0
+
         data = {
-            'm_id': str(row['m_id']),
-            'title_ja': str(row['title_ja']),
-            'title_en': str(row['title_en']),
-            'title_zh': str(row['title_zh']),
-            'title_ko': str(row['title_ko']),
-            'description_ja': str(row['description_ja']),
-            'description_en': str(row['description_en']),
-            'description_zh': str(row['description_zh']),
-            'description_ko': str(row['description_ko']),
+            'm_id': clean_val(row['m_id']),
+            'title_ja': clean_val(row['title_ja']),
+            'title_en': clean_val(row['title_en']),
+            'title_zh': clean_val(row['title_zh']),
+            'title_ko': clean_val(row['title_ko']),
+            'description_ja': clean_val(row['description_ja']),
+            'description_en': clean_val(row['description_en']),
+            'description_zh': clean_val(row['description_zh']),
+            'description_ko': clean_val(row['description_ko']),
             'targetSpotIds': target_ids,
+            'sort_order': sort_order,
         }
         batch.set(doc_ref, data)
 
